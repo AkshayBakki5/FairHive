@@ -52,7 +52,9 @@ Serve the `frontend` folder over HTTP (required for API calls):
 If the frontend is not on the same origin as the API, set the API base URL before loading pages:
 
 ```html
-<script>window.FAIRHIVE_API_URL = 'http://localhost:3000/api';</script>
+<script>
+  window.FAIRHIVE_API_URL = "http://localhost:3000/api";
+</script>
 <script src="js/api.js"></script>
 ```
 
@@ -116,4 +118,8 @@ See [docs/SCHEMA.md](docs/SCHEMA.md). All data is stored in JSON files under `ba
 
 ## License
 
-MIT.
+📜 License
+This project is licensed under the MIT License.
+
+👨‍💻 Author
+Developed by B Akshay ✨ If you like this bot, consider giving it a ⭐ on GitHub!
