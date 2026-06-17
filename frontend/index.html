@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FairHive</title>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/invites.js"></script>
+</head>
+<body>
+  <script>
+    (function () {
+      // Check for invite token in hash
+      FairHiveInvites.storeInviteFromHash();
+
+      if (FairHiveAuth.getToken()) {
+        // User is authenticated - check and accept invite if present
+        FairHiveInvites.checkAndAcceptInvite().then(function (redirected) {
+          if (!redirected) {
+            window.location.href = 'dashboard.html';
+          }
+        });
+      } else {
+        // User not authenticated - redirect to login (invite token is stored)
+        window.location.href = 'login.html';
+      }
+    })();
+  </script>
+  <p>Redirecting...</p>
+</body>
+</html>

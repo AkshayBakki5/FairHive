@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics – FairHive</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages/analytics.css">
+</head>
+<body>
+  <div class="app">
+    <div id="sidebar-placeholder"></div>
+    <div class="main-wrap">
+      <div id="navbar-placeholder"></div>
+      <main class="main-content">
+        <h1 class="page-title">Analytics</h1>
+        <div id="no-room" class="alert alert-warning" style="display: none;">Select or create a room from the Dashboard.</div>
+        <div id="has-room" style="display: none;">
+          <!-- KPI Cards -->
+          <div class="analytics-grid">
+            <div class="analytics-card">
+              <div class="analytics-card-label">Total expenses (this month)</div>
+              <div class="analytics-card-value" id="kpiTotalExpenses">₹0</div>
+            </div>
+            <div class="analytics-card">
+              <div class="analytics-card-label">Top spender</div>
+              <div class="analytics-card-value" id="kpiTopSpender">–</div>
+              <div class="analytics-card-sub" id="kpiTopSpenderAmount"></div>
+            </div>
+            <div class="analytics-card">
+              <div class="analytics-card-label">Most expensive category</div>
+              <div class="analytics-card-value" id="kpiTopCategory">–</div>
+            </div>
+          </div>
+
+          <!-- Expenses vs Chores sections -->
+          <div class="analytics-layout">
+            <!-- Expenses analytics -->
+            <div>
+              <h2 class="analytics-section-title">Expenses</h2>
+
+              <div class="analytics-card-chart">
+                <div class="analytics-card-chart-header">
+                  <span>Spending by category</span>
+                  <span class="analytics-tag">Expenses</span>
+                </div>
+                <canvas id="chartCategory" height="220"></canvas>
+              </div>
+
+              <div class="analytics-card-chart">
+                <div class="analytics-card-chart-header">
+                  <span>Spending by roommate</span>
+                  <span class="analytics-tag">Expenses</span>
+                </div>
+                <canvas id="chartUserSpending" height="220"></canvas>
+              </div>
+
+              <div class="analytics-card-chart">
+                <div class="analytics-card-chart-header">
+                  <span>Monthly trend (last 6 months)</span>
+                  <span class="analytics-tag">Expenses</span>
+                </div>
+                <canvas id="chartMonthlyTrend" height="220"></canvas>
+              </div>
+            </div>
+
+            <!-- Chores analytics -->
+            <div>
+              <h2 class="analytics-section-title">Chores</h2>
+
+              <div class="analytics-card-chart">
+                <div class="analytics-card-chart-header">
+                  <span>Chore completion by member</span>
+                  <span class="analytics-tag">Chores</span>
+                </div>
+                <canvas id="chartChores" height="240"></canvas>
+              </div>
+
+              <div class="analytics-card-chart">
+                <div class="analytics-card-chart-header">
+                  <span>Net balance per user</span>
+                  <span class="analytics-tag">Balances</span>
+                </div>
+                <canvas id="chartBalances" height="240"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="loading" class="loading-wrap"><div class="spinner"></div></div>
+      </main>
+    </div>
+  </div>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script>
+    (function () {
+      if (!FairHiveAuth.guard()) return;
+      FairHiveLayout.initLayout();
+
+      var room = FairHiveAuth.getCurrentRoom();
+      var noRoom = document.getElementById('no-room');
+      var hasRoom = document.getElementById('has-room');
+      var loading = document.getElementById('loading');
+
+      if (!room) {
+        noRoom.style.display = 'block';
+        loading.style.display = 'none';
+        return;
+      }
+
+      loading.style.display = 'block';
+      hasRoom.style.display = 'block';
+
+      FairHiveAPI.get('/rooms/' + room.id + '/analytics/summary').then(function (data) {
+        loading.style.display = 'none';
+        if (!data) return;
+
+        // KPIs
+        document.getElementById('kpiTotalExpenses').textContent = '₹' + (data.total_expenses || 0).toFixed(2);
+        document.getElementById('kpiTopSpender').textContent = data.top_spender || '–';
+        if (data.top_spender && data.user_spending) {
+          var ts = data.user_spending.find(function (u) { return u.user === data.top_spender; });
+          document.getElementById('kpiTopSpenderAmount').textContent = ts ? ('Spending: ₹' + ts.amount.toFixed(2)) : '';
+        }
+        document.getElementById('kpiTopCategory').textContent = data.most_expensive_category || '–';
+
+        // Charts
+        renderPieChart('chartCategory', 'By category', data.category_breakdown || [], 'category');
+        renderBarChart('chartUserSpending', 'By roommate', data.user_spending || [], 'user');
+        renderLineChart('chartMonthlyTrend', 'Monthly trend', data.monthly_trend || [], 'month');
+        renderDoughnutChart('chartChores', 'Chores completed', data.chore_stats || [], 'user');
+        renderBarChartBalances('chartBalances', 'Net balance', data.balances || []);
+      }).catch(function () {
+        loading.style.display = 'none';
+      });
+
+      function renderPieChart(canvasId, label, items, labelKey) {
+        var canvas = document.getElementById(canvasId);
+        if (!canvas || !window.Chart) return;
+        var labels = items.map(function (i) { return i[labelKey]; });
+        var values = items.map(function (i) { return i.amount; });
+        new Chart(canvas.getContext('2d'), {
+          type: 'pie',
+          data: {
+            labels: labels,
+            datasets: [{
+              data: values,
+              backgroundColor: ['#4f46e5','#22c55e','#f59e0b','#ef4444','#3b82f6','#6366f1'],
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom' } }
+          }
+        });
+      }
+
+      function renderBarChart(canvasId, label, items, labelKey) {
+        var canvas = document.getElementById(canvasId);
+        if (!canvas || !window.Chart) return;
+        var labels = items.map(function (i) { return i[labelKey]; });
+        var values = items.map(function (i) { return i.amount; });
+        new Chart(canvas.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: label,
+              data: values,
+              backgroundColor: 'rgba(59,130,246,0.7)',
+              borderRadius: 6,
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: { beginAtZero: true }
+            },
+            plugins: { legend: { display: false } }
+          }
+        });
+      }
+
+      function renderLineChart(canvasId, label, items, labelKey) {
+        var canvas = document.getElementById(canvasId);
+        if (!canvas || !window.Chart) return;
+        var labels = items.map(function (i) { return i[labelKey]; });
+        var values = items.map(function (i) { return i.amount; });
+        new Chart(canvas.getContext('2d'), {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: label,
+              data: values,
+              borderColor: '#4f46e5',
+              backgroundColor: 'rgba(79,70,229,0.12)',
+              fill: true,
+              tension: 0.3,
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: { beginAtZero: true }
+            },
+            plugins: { legend: { display: false } }
+          }
+        });
+      }
+
+      function renderDoughnutChart(canvasId, label, items, labelKey) {
+        var canvas = document.getElementById(canvasId);
+        if (!canvas || !window.Chart) return;
+        var labels = items.map(function (i) { return i[labelKey]; });
+        var values = items.map(function (i) { return i.completed; });
+        new Chart(canvas.getContext('2d'), {
+          type: 'doughnut',
+          data: {
+            labels: labels,
+            datasets: [{
+              data: values,
+              backgroundColor: ['#22c55e','#3b82f6','#f97316','#e11d48','#6366f1'],
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom' } }
+          }
+        });
+      }
+
+      function renderBarChartBalances(canvasId, label, items) {
+        var canvas = document.getElementById(canvasId);
+        if (!canvas || !window.Chart) return;
+        var labels = items.map(function (i) { return i.user; });
+        var values = items.map(function (i) { return i.balance; });
+        new Chart(canvas.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: label,
+              data: values,
+              backgroundColor: values.map(function (v) { return v >= 0 ? 'rgba(34,197,94,0.7)' : 'rgba(239,68,68,0.7)'; }),
+              borderRadius: 6,
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: { beginAtZero: true }
+            },
+            plugins: { legend: { display: false } }
+          }
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

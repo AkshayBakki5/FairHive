@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chore Manager – FairHive</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages/chores.css">
+</head>
+<body>
+  <div class="app">
+    <div id="sidebar-placeholder"></div>
+    <div class="main-wrap">
+      <div id="navbar-placeholder"></div>
+      <main class="main-content">
+        <div id="no-room" class="alert alert-warning" style="display: none;">Select or create a room from the Dashboard.</div>
+
+        <div id="has-room" style="display: none;">
+          <!-- Header -->
+          <div class="chores-header">
+            <div>
+              <h1 class="page-title" style="margin-bottom: 0.25rem;">Chore Manager</h1>
+              <p class="page-subtitle" id="choresRoomLabel">Keep your room's chores fair and on track.</p>
+            </div>
+            <div class="chores-header-actions">
+              <label class="chore-auto-rotate-wrap">
+                <input type="checkbox" id="choreAutoRotate" checked>
+                <span>Auto rotate</span>
+              </label>
+              <button type="button" class="btn btn-primary" id="btnAddChore">+ Add Chore</button>
+            </div>
+          </div>
+
+          <!-- Date Navigation -->
+          <div class="chores-date-nav">
+            <button type="button" class="btn btn-ghost btn-icon" id="choreDatePrev" aria-label="Previous date">&#8249;</button>
+            <div class="chores-date-display">
+              <span class="chores-date-label" id="choreDateLabel">Today</span>
+              <input type="date" id="choreDatePicker" class="form-input chore-date-input" aria-label="Select date">
+            </div>
+            <button type="button" class="btn btn-ghost btn-icon" id="choreDateNext" aria-label="Next date">&#8250;</button>
+            <div class="chores-date-quick">
+              <button type="button" class="btn btn-ghost btn-sm" id="choreDateYesterday">Yesterday</button>
+              <button type="button" class="btn btn-primary btn-sm" id="choreDateToday">Today</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="choreDateTomorrow">Tomorrow</button>
+            </div>
+          </div>
+
+          <!-- Summary Cards -->
+          <div class="chores-summary-grid">
+            <div class="chores-summary-card">
+              <div class="summary-icon summary-icon-primary">&#128203;</div>
+              <div>
+                <div class="summary-value" id="totalChoresCount">0</div>
+                <div class="summary-label">Total Chores</div>
+              </div>
+            </div>
+            <div class="chores-summary-card">
+              <div class="summary-icon summary-icon-warning">&#9203;</div>
+              <div>
+                <div class="summary-value" id="pendingChoresCount">0</div>
+                <div class="summary-label">Pending</div>
+              </div>
+            </div>
+            <div class="chores-summary-card">
+              <div class="summary-icon summary-icon-success">&#9989;</div>
+              <div>
+                <div class="summary-value" id="completedChoresCount">0</div>
+                <div class="summary-label">Completed</div>
+              </div>
+            </div>
+            <div class="chores-summary-card">
+              <div class="summary-icon summary-icon-primary">&#11088;</div>
+              <div>
+                <div class="summary-value" id="pointsEarnedCount">0</div>
+                <div class="summary-label">Points Earned</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chore Dashboard -->
+          <div class="chores-layout">
+            <div class="chores-main">
+              <!-- Chores for selected date -->
+              <div class="card chore-section-box">
+                <div class="card-header chore-list-header">
+                  <span class="chore-section-icon">&#128197;</span>
+                  Chores for <span id="choreListDateLabel">selected date</span>
+                  <div class="chore-filter-wrap">
+                    <label for="choreStatusFilter" class="sr-only">Filter by status</label>
+                    <select id="choreStatusFilter" class="form-select chore-status-filter">
+                      <option value="all">All</option>
+                      <option value="pending">Pending</option>
+                      <option value="completed">Completed</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="card-body">
+                  <div id="choresList" class="chores-list"></div>
+                  <p id="emptyChores" class="empty-text" style="display:none;">No chores for this date. Select another date or add a new chore.</p>
+                  <p id="allCompletedMsg" class="empty-text success-msg" style="display:none;">All chores completed for today.</p>
+                </div>
+              </div>
+
+              <!-- Chore History -->
+              <div class="card" style="margin-top: 1.5rem;">
+                <div class="card-header">Chore History</div>
+                <div class="card-body">
+                  <div id="choreHistory" class="table-wrap"></div>
+                  <p id="emptyHistory" class="empty-text" style="display:none;">No completed chores yet.</p>
+                </div>
+              </div>
+            </div>
+
+            <aside class="chores-sidebar">
+              <!-- Member Stats & Fairness -->
+              <div class="card">
+                <div class="card-header">Member Stats & Fairness</div>
+                <div class="card-body">
+                  <div id="memberStats" class="member-stats"></div>
+                  <p id="emptyMembers" class="empty-text" style="display:none;">No members found.</p>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </div>
+
+        <div id="loading" class="loading-wrap" style="display: none;"><div class="spinner"></div></div>
+
+        <!-- Add Chore Modal -->
+        <div id="addChoreModal" class="modal-backdrop" style="display: none;">
+          <div class="modal modal-large add-chore-modal">
+            <div class="modal-header">
+              Add New Chore
+              <button type="button" class="modal-close" id="addChoreClose" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div id="addChoreError" class="alert alert-error" style="display: none;"></div>
+
+              <div class="form-group">
+                <label for="choreTitle">Title</label>
+                <input
+                  type="text"
+                  id="choreTitle"
+                  class="form-input"
+                  placeholder="e.g., Clean Kitchen"
+                >
+              </div>
+              <div class="form-group">
+                <label for="choreDescription">Description</label>
+                <textarea
+                  id="choreDescription"
+                  class="form-input"
+                  rows="3"
+                  placeholder="Optional details..."
+                ></textarea>
+              </div>
+
+              <div class="form-row form-row-two">
+                <div class="form-group">
+                  <label>Category</label>
+                  <select id="choreCategory" class="form-select add-chore-select">
+                    <option value="cleaning">&#128169; Cleaning</option>
+                    <option value="cooking">&#129344; Cooking</option>
+                    <option value="dishes">&#127860; Dishes</option>
+                    <option value="trash">&#128465; Trash</option>
+                    <option value="laundry">&#129529; Laundry</option>
+                    <option value="bathroom">&#128168; Bathroom</option>
+                    <option value="other">&#128203; Other</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Frequency</label>
+                  <select id="choreFrequency" class="form-select">
+                    <option value="once">One-time</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekly" selected>Weekly</option>
+                    <option value="monthly">Monthly</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row form-row-two">
+                <div class="form-group">
+                  <label for="chorePoints">Points</label>
+                  <input
+                    type="number"
+                    id="chorePoints"
+                    class="form-input"
+                    min="0"
+                    value="10"
+                    placeholder="10"
+                  >
+                </div>
+                <div class="form-group">
+                  <label for="choreDueDate">Due Date</label>
+                  <div class="input-with-icon">
+                    <input type="date" id="choreDueDate" class="form-input">
+                    <span class="input-icon input-icon-right" aria-hidden="true">&#128197;</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-row form-row-two">
+                <div class="form-group">
+                  <label for="choreDueTime">Due Time</label>
+                  <input
+                    type="time"
+                    id="choreDueTime"
+                    class="form-input"
+                    placeholder="Optional"
+                  >
+                </div>
+                <div class="form-group">
+                  <label for="choreAssignedTo">Assign To <span class="label-hint">(auto if empty)</span></label>
+                  <select id="choreAssignedTo" class="form-select">
+                    <option value="">Auto-assign (first in rotation)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Rotation Members <span class="label-hint">(order matters for auto-rotate)</span></label>
+                <div id="choreRotationMembers" class="rotation-members-list"></div>
+              </div>
+
+              <button type="button" class="btn btn-primary btn-block add-chore-submit" id="addChoreSubmit">Add Chore</button>
+            </div>
+            <div class="modal-footer modal-footer-minimal">
+              <button type="button" class="btn btn-ghost" id="addChoreCancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/chores.js"></script>
+</body>
+</html>

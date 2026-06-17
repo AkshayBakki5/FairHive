@@ -1,0 +1,22 @@
+{
+  "users": [
+    { "email": "admin@fairhive.demo", "password": "admin123", "displayName": "Admin User", "role": "admin" },
+    { "email": "alice@fairhive.demo", "password": "alice123", "displayName": "Alice", "role": "member" },
+    { "email": "bob@fairhive.demo", "password": "bob123", "displayName": "Bob", "role": "member" }
+  ],
+  "rooms": [
+    { "name": "Sunset Apartment", "code": "SUNSET" }
+  ],
+  "expenses": [
+    { "description": "Groceries", "amount": 120, "splitType": "equal" },
+    { "description": "Internet bill", "amount": 60, "splitType": "equal" }
+  ],
+  "chores": [
+    { "title": "Kitchen cleanup", "description": "Wash dishes, wipe counters", "frequency": "daily" },
+    { "title": "Trash", "description": "Take out trash", "frequency": "weekly" }
+  ],
+  "bills": [
+    { "name": "Electricity", "amount": 85, "dueDate": "2025-02-15" },
+    { "name": "Water", "amount": 45, "dueDate": "2025-02-20" }
+  ]
+}

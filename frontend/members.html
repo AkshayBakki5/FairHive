@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Members – FairHive</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <style>
+    .room-summary-card {
+      background: var(--gradient-header);
+      color: white;
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow-lg);
+    }
+    .room-summary-card h1 {
+      color: white;
+      font-size: var(--font-size-3xl);
+      font-weight: var(--font-weight-bold);
+      margin-bottom: 0.5rem;
+    }
+    .room-summary-card .subtitle {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: var(--font-size-sm);
+      margin-bottom: 1rem;
+    }
+    .room-summary-card .room-name {
+      font-size: var(--font-size-lg);
+      font-weight: var(--font-weight-semibold);
+      margin-bottom: 0.5rem;
+    }
+    .room-summary-card .member-count {
+      font-size: var(--font-size-sm);
+      color: rgba(255, 255, 255, 0.85);
+      margin-bottom: 1rem;
+    }
+    .room-code-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      padding: 0.5rem 1rem;
+      border-radius: 999px;
+      font-weight: var(--font-weight-semibold);
+      font-size: var(--font-size-sm);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .room-code-pill:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    .room-code-pill svg {
+      width: 16px;
+      height: 16px;
+    }
+    .members-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .member-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .member-item:last-child {
+      border-bottom: none;
+    }
+    .member-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--gradient-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: var(--font-weight-bold);
+      font-size: var(--font-size-lg);
+      flex-shrink: 0;
+    }
+    .member-info {
+      flex: 1;
+    }
+    .member-name {
+      font-weight: var(--font-weight-semibold);
+      margin-bottom: 0.25rem;
+    }
+    .member-email {
+      font-size: var(--font-size-sm);
+      color: var(--text-muted);
+    }
+    .member-badges {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.25rem;
+    }
+    .member-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn-icon {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: var(--radius);
+      transition: background 0.2s, color 0.2s;
+    }
+    .btn-icon:hover {
+      background: var(--bg);
+      color: var(--danger);
+    }
+    .btn-icon svg {
+      width: 18px;
+      height: 18px;
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-tabs {
+      display: flex;
+      border-bottom: 2px solid var(--border);
+      margin: -1.25rem -1.25rem 1.25rem;
+    }
+    .modal-tab {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      font-weight: var(--font-weight-medium);
+      color: var(--text-muted);
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .modal-tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+    .modal-tab-content {
+      display: none;
+    }
+    .modal-tab-content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div id="sidebar-placeholder"></div>
+    <div class="main-wrap">
+      <div id="navbar-placeholder"></div>
+      <main class="main-content">
+        <div id="no-room" class="alert alert-warning" style="display: none;">Select or create a room from the Dashboard.</div>
+        <div id="has-room" style="display: none;">
+          <div class="room-summary-card">
+            <h1>Members</h1>
+            <div class="subtitle">Manage your room and roommates</div>
+            <div class="room-name" id="roomName"></div>
+            <div class="member-count" id="memberCount">0 members</div>
+            <div class="room-code-pill" id="roomCodePill">
+              <span id="roomCode"></span>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span>Room Members</span>
+              <button type="button" class="btn btn-primary" id="btnAddMember" style="display: none;">Add Member</button>
+            </div>
+            <div class="card-body">
+              <ul class="members-list" id="membersList"></ul>
+            </div>
+          </div>
+        </div>
+        <div id="loading" class="loading-wrap"><div class="spinner"></div></div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Add Member Modal -->
+  <div id="addMemberModal" class="modal-backdrop" style="display: none;">
+    <div class="modal">
+      <div class="modal-header">
+        <span>Add Member</span>
+        <button type="button" class="modal-close" id="closeAddMemberModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-tabs">
+          <button type="button" class="modal-tab active" data-tab="invite">Invite by email</button>
+          <button type="button" class="modal-tab" data-tab="existing">Add existing user</button>
+        </div>
+        <div class="modal-tab-content active" id="tabInvite">
+          <div class="form-group">
+            <input type="email" id="inviteEmail" placeholder=" " required>
+            <label for="inviteEmail">Email</label>
+          </div>
+          <div class="form-group">
+            <input type="text" id="inviteName" placeholder=" ">
+            <label for="inviteName">Name (optional)</label>
+          </div>
+          <div class="form-group">
+            <select id="inviteRole">
+              <option value="member">Member</option>
+              <option value="admin">Admin</option>
+            </select>
+            <label for="inviteRole" style="position: static; font-size: var(--font-size-sm); color: var(--text-muted); margin-bottom: 0.5rem; display: block;">Role</label>
+          </div>
+          <div id="inviteError" class="alert alert-error" style="display: none;"></div>
+          <div id="inviteSuccess" class="alert alert-success" style="display: none;"></div>
+        </div>
+        <div class="modal-tab-content" id="tabExisting">
+          <div class="form-group">
+            <input type="email" id="existingEmail" placeholder=" " required>
+            <label for="existingEmail">Email</label>
+          </div>
+          <div class="form-group">
+            <select id="existingRole">
+              <option value="member">Member</option>
+              <option value="admin">Admin</option>
+            </select>
+            <label for="existingRole" style="position: static; font-size: var(--font-size-sm); color: var(--text-muted); margin-bottom: 0.5rem; display: block;">Role</label>
+          </div>
+          <div id="existingError" class="alert alert-error" style="display: none;"></div>
+          <div id="existingSuccess" class="alert alert-success" style="display: none;"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" id="cancelAddMember">Cancel</button>
+        <button type="button" class="btn btn-primary" id="submitInvite" data-tab="invite">Send Invite</button>
+        <button type="button" class="btn btn-primary" id="submitExisting" data-tab="existing" style="display: none;">Add Member</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/invites.js"></script>
+  <script src="js/layout.js"></script>
+  <script>
+    (function () {
+      if (!FairHiveAuth.guard()) return;
+      
+      // Check for invite token and accept if present
+      FairHiveInvites.checkAndAcceptInvite();
+      
+      FairHiveLayout.initLayout();
+
+      var room = FairHiveAuth.getCurrentRoom();
+      var noRoom = document.getElementById('no-room');
+      var hasRoom = document.getElementById('has-room');
+      var loading = document.getElementById('loading');
+      var currentUser = FairHiveAuth.getUser();
+      var isAdmin = false;
+
+      if (!room) {
+        noRoom.style.display = 'block';
+        loading.style.display = 'none';
+        return;
+      }
+
+      loading.style.display = 'block';
+      hasRoom.style.display = 'block';
+
+      function loadMembers() {
+        FairHiveAPI.get('/rooms/' + room.id + '/members').then(function (members) {
+          loading.style.display = 'none';
+          var currentUserId = currentUser.id;
+          var currentMember = members.find(function (m) { return m.userId === currentUserId; });
+          isAdmin = currentMember && currentMember.role === 'admin';
+
+          // Show/hide Add Member button
+          var btnAddMember = document.getElementById('btnAddMember');
+          if (btnAddMember) btnAddMember.style.display = isAdmin ? 'inline-flex' : 'none';
+
+          // Update member count
+          var memberCountEl = document.getElementById('memberCount');
+          if (memberCountEl) {
+            memberCountEl.textContent = members.length + ' member' + (members.length !== 1 ? 's' : '');
+          }
+
+          // Render members list
+          var membersList = document.getElementById('membersList');
+          if (membersList) {
+            membersList.innerHTML = members.map(function (member) {
+              var user = { displayName: member.displayName, email: member.email };
+              var initial = (user.displayName || user.email || '?').charAt(0).toUpperCase();
+              var isCurrentUser = member.userId === currentUserId;
+              var badges = [];
+              if (member.role === 'admin') badges.push('<span class="badge badge-primary">Admin</span>');
+              if (isCurrentUser) badges.push('<span class="badge badge-neutral">You</span>');
+
+              var removeBtn = '';
+              if (isAdmin && !isCurrentUser) {
+                removeBtn = '<button type="button" class="btn-icon" data-member-id="' + member.id + '" data-user-id="' + member.userId + '" title="Remove member">' +
+                  '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">' +
+                  '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />' +
+                  '</svg></button>';
+              }
+
+              return '<li class="member-item">' +
+                '<div class="member-avatar">' + initial + '</div>' +
+                '<div class="member-info">' +
+                '<div class="member-name">' + (user.displayName || user.email) + '</div>' +
+                '<div class="member-email">' + (user.email || '') + '</div>' +
+                (badges.length > 0 ? '<div class="member-badges">' + badges.join('') + '</div>' : '') +
+                '</div>' +
+                '<div class="member-actions">' + removeBtn + '</div>' +
+                '</li>';
+            }).join('');
+
+            // Attach remove handlers
+            membersList.querySelectorAll('.btn-icon[data-member-id]').forEach(function (btn) {
+              btn.addEventListener('click', function () {
+                if (confirm('Remove this member from the room?')) {
+                  var memberId = btn.getAttribute('data-member-id');
+                  FairHiveAPI.delete('/rooms/' + room.id + '/members/' + memberId).then(function () {
+                    loadMembers();
+                  }).catch(function (err) {
+                    alert((err.body && err.body.error) || 'Failed to remove member');
+                  });
+                }
+              });
+            });
+          }
+        }).catch(function (err) {
+          loading.style.display = 'none';
+          console.error('Failed to load members:', err);
+        });
+      }
+
+      // Update room info
+      document.getElementById('roomName').textContent = room.name;
+      document.getElementById('roomCode').textContent = room.code;
+
+      // Copy room code
+      document.getElementById('roomCodePill').addEventListener('click', function () {
+        navigator.clipboard.writeText(room.code).then(function () {
+          var pill = document.getElementById('roomCodePill');
+          var originalText = pill.querySelector('span').textContent;
+          pill.querySelector('span').textContent = 'Copied!';
+          setTimeout(function () {
+            pill.querySelector('span').textContent = originalText;
+          }, 2000);
+        });
+      });
+
+      // Modal handling
+      var addMemberModal = document.getElementById('addMemberModal');
+      var modalTabs = document.querySelectorAll('.modal-tab');
+      var tabContents = document.querySelectorAll('.modal-tab-content');
+      var submitInvite = document.getElementById('submitInvite');
+      var submitExisting = document.getElementById('submitExisting');
+
+      document.getElementById('btnAddMember').addEventListener('click', function () {
+        addMemberModal.style.display = 'flex';
+        // Reset form
+        document.getElementById('inviteEmail').value = '';
+        document.getElementById('inviteName').value = '';
+        document.getElementById('inviteRole').value = 'member';
+        document.getElementById('existingEmail').value = '';
+        document.getElementById('existingRole').value = 'member';
+        document.getElementById('inviteError').style.display = 'none';
+        document.getElementById('inviteSuccess').style.display = 'none';
+        document.getElementById('existingError').style.display = 'none';
+        document.getElementById('existingSuccess').style.display = 'none';
+        // Switch to invite tab
+        modalTabs[0].classList.add('active');
+        modalTabs[1].classList.remove('active');
+        tabContents[0].classList.add('active');
+        tabContents[1].classList.remove('active');
+        submitInvite.style.display = 'inline-flex';
+        submitExisting.style.display = 'none';
+      });
+
+      document.getElementById('closeAddMemberModal').addEventListener('click', function () {
+        addMemberModal.style.display = 'none';
+      });
+      document.getElementById('cancelAddMember').addEventListener('click', function () {
+        addMemberModal.style.display = 'none';
+      });
+
+      // Tab switching
+      modalTabs.forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          var tabName = tab.getAttribute('data-tab');
+          modalTabs.forEach(function (t) { t.classList.remove('active'); });
+          tabContents.forEach(function (c) { c.classList.remove('active'); });
+          tab.classList.add('active');
+          document.getElementById('tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).classList.add('active');
+          if (tabName === 'invite') {
+            submitInvite.style.display = 'inline-flex';
+            submitExisting.style.display = 'none';
+          } else {
+            submitInvite.style.display = 'none';
+            submitExisting.style.display = 'inline-flex';
+          }
+        });
+      });
+
+      // Submit invite
+      submitInvite.addEventListener('click', function () {
+        var email = document.getElementById('inviteEmail').value.trim();
+        var name = document.getElementById('inviteName').value.trim();
+        var role = document.getElementById('inviteRole').value;
+        var errorEl = document.getElementById('inviteError');
+        var successEl = document.getElementById('inviteSuccess');
+
+        if (!email) {
+          errorEl.textContent = 'Email is required';
+          errorEl.style.display = 'block';
+          successEl.style.display = 'none';
+          return;
+        }
+
+        errorEl.style.display = 'none';
+        successEl.style.display = 'none';
+
+        FairHiveAPI.post('/rooms/' + room.id + '/invites', {
+          email: email,
+          name: name || undefined,
+          role: role
+        }).then(function () {
+          successEl.textContent = 'Invitation sent to ' + email;
+          successEl.style.display = 'block';
+          setTimeout(function () {
+            addMemberModal.style.display = 'none';
+            loadMembers();
+          }, 1500);
+        }).catch(function (err) {
+          errorEl.textContent = (err.body && err.body.error) || 'Failed to send invitation';
+          errorEl.style.display = 'block';
+        });
+      });
+
+      // Submit existing user
+      submitExisting.addEventListener('click', function () {
+        var email = document.getElementById('existingEmail').value.trim();
+        var role = document.getElementById('existingRole').value;
+        var errorEl = document.getElementById('existingError');
+        var successEl = document.getElementById('existingSuccess');
+
+        if (!email) {
+          errorEl.textContent = 'Email is required';
+          errorEl.style.display = 'block';
+          successEl.style.display = 'none';
+          return;
+        }
+
+        errorEl.style.display = 'none';
+        successEl.style.display = 'none';
+
+        FairHiveAPI.post('/rooms/' + room.id + '/members', {
+          email: email,
+          role: role
+        }).then(function () {
+          successEl.textContent = 'Member added successfully';
+          successEl.style.display = 'block';
+          setTimeout(function () {
+            addMemberModal.style.display = 'none';
+            loadMembers();
+          }, 1500);
+        }).catch(function (err) {
+          errorEl.textContent = (err.body && err.body.error) || 'Failed to add member';
+          errorEl.style.display = 'block';
+        });
+      });
+
+      loadMembers();
+    })();
+  </script>
+</body>
+</html>

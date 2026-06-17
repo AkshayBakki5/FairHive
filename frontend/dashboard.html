@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard – FairHive</title>
+    <link rel="stylesheet" href="css/variables.css" />
+    <link rel="stylesheet" href="css/layout.css" />
+    <link rel="stylesheet" href="css/components.css" />
+    <link rel="stylesheet" href="css/pages/dashboard.css" />
+  </head>
+  <body>
+    <div class="app">
+      <div id="sidebar-placeholder"></div>
+      <div class="main-wrap">
+        <div id="navbar-placeholder"></div>
+        <main class="main-content">
+          <h1 class="page-title">Home</h1>
+          <div id="no-room" style="display: none">
+            <div class="card card-body">
+              <p style="margin-bottom: 1rem">
+                Create a room or join one with a code.
+              </p>
+              <div style="display: flex; gap: 1rem; flex-wrap: wrap">
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  id="btnCreateRoom"
+                >
+                  Create room
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  id="btnJoinRoom"
+                >
+                  Join room
+                </button>
+              </div>
+            </div>
+            <div
+              id="createRoomModal"
+              class="modal-backdrop"
+              style="display: none"
+            >
+              <div class="modal">
+                <div class="modal-header">Create room</div>
+                <div class="modal-body">
+                  <div class="form-group">
+                    <input
+                      type="text"
+                      id="createRoomName"
+                      placeholder=" "
+                      value="My Room"
+                    />
+                    <label for="createRoomName">Room name</label>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button
+                    type="button"
+                    class="btn btn-ghost"
+                    id="createRoomCancel"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    id="createRoomSubmit"
+                  >
+                    Create
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div
+              id="joinRoomModal"
+              class="modal-backdrop"
+              style="display: none"
+            >
+              <div class="modal">
+                <div class="modal-header">Join room</div>
+                <div class="modal-body">
+                  <div class="form-group">
+                    <input
+                      type="text"
+                      id="joinRoomCode"
+                      placeholder=" "
+                      maxlength="6"
+                      style="text-transform: uppercase"
+                    />
+                    <label for="joinRoomCode">Room code (6 characters)</label>
+                  </div>
+                  <div
+                    id="joinError"
+                    class="alert alert-error"
+                    style="display: none"
+                  ></div>
+                </div>
+                <div class="modal-footer">
+                  <button
+                    type="button"
+                    class="btn btn-ghost"
+                    id="joinRoomCancel"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-primary"
+                    id="joinRoomSubmit"
+                  >
+                    Join
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="has-room" style="display: none">
+            <!-- Welcome Banner -->
+            <div class="welcome-banner">
+              <div class="welcome-content">
+                <div class="welcome-icon">⭐</div>
+                <div class="welcome-text">
+                  <div class="welcome-greeting">Welcome back</div>
+                  <div class="welcome-name" id="welcomeName">Hello, User!</div>
+                  <div class="welcome-subtitle">
+                    Manage your shared living expenses and chores with ease
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Summary Statistics -->
+            <div class="summary-grid" id="summaryGrid"></div>
+
+            <!-- Category Cards -->
+            <div class="category-cards">
+              <a
+                href="expenses.html"
+                class="category-card category-card-expense"
+              >
+                <div class="category-icon">
+                  <svg
+                    width="32"
+                    height="32"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-width="2"
+                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <div class="category-content">
+                  <h3 class="category-title">Expense Tracker</h3>
+                  <p class="category-description">
+                    Track shared expenses, split bills, and settle balances
+                  </p>
+                  <div class="category-action">• Add & manage expenses</div>
+                  <div class="category-action">
+                    • Automatic expense splitting
+                  </div>
+                  <div class="category-action">• Track who owes whom</div>
+                  <div class="category-action">• Settlement suggestions</div>
+                  <div
+                    style="
+                      margin: 10px;
+                      border-bottom: 1px solid white;
+                      display: inline-block;
+                    "
+                    class="category-action"
+                  >
+                    <p>Get Started <span style="font-size: 20px">→</span></p>
+                  </div>
+                </div>
+              </a>
+              <a href="chores.html" class="category-card category-card-chore">
+                <div class="category-icon">
+                  <svg
+                    width="32"
+                    height="32"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-width="2"
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+                    />
+                  </svg>
+                </div>
+                <div class="category-content">
+                  <h3 class="category-title">Chore Manager</h3>
+                  <p class="category-description">
+                    Organize household tasks and track completion
+                  </p>
+                  <div class="category-action">• Assign daily chores</div>
+                  <div class="category-action">• Fair rotation system</div>
+                  <div class="category-action">
+                    • Individual contribution insights
+                  </div>
+                  <div class="category-action">• Task completion history</div>
+                  <div
+                    style="
+                      margin: 10px;
+                      border-bottom: 1px solid white;
+                      display: inline-block;
+                    "
+                    class="category-action"
+                  >
+                    <p>Get Started <span style="font-size: 20px">→</span></p>
+                  </div>
+                </div>
+              </a>
+            </div>
+          </div>
+          <div id="loading" class="loading-wrap">
+            <div class="spinner"></div>
+          </div>
+        </main>
+        <footer class="footer">
+          <p> Perfect for Roomates & Shared Living ❤️</p>
+        </footer>
+      </div>
+    </div>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/invites.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/notifications.js"></script>
+    <script>
+      (function () {
+        if (!FairHiveAuth.guard()) return;
+
+        // Check for invite token and accept if present
+        FairHiveInvites.checkAndAcceptInvite();
+
+        FairHiveLayout.initLayout();
+
+        var noRoom = document.getElementById("no-room");
+        var hasRoom = document.getElementById("has-room");
+        var loading = document.getElementById("loading");
+        var summaryGrid = document.getElementById("summaryGrid");
+
+        function showRoom() {
+          var room = FairHiveAuth.getCurrentRoom();
+          if (room) {
+            noRoom.style.display = "none";
+            hasRoom.style.display = "block";
+            loading.style.display = "none";
+            loadSummary();
+          } else {
+            FairHiveAPI.get("/rooms")
+              .then(function (rooms) {
+                loading.style.display = "none";
+                if (rooms.length > 0) {
+                  FairHiveAuth.setCurrentRoom({
+                    id: rooms[0].id,
+                    name: rooms[0].name,
+                    code: rooms[0].code,
+                  });
+                  showRoom();
+                } else {
+                  noRoom.style.display = "block";
+                  hasRoom.style.display = "none";
+                }
+              })
+              .catch(function () {
+                loading.style.display = "none";
+                noRoom.style.display = "block";
+              });
+          }
+        }
+
+        function loadSummary() {
+          var room = FairHiveAuth.getCurrentRoom();
+          if (!room) return;
+          Promise.all([
+            FairHiveAPI.get("/rooms/" + room.id + "/expenses"),
+            FairHiveAPI.get("/rooms/" + room.id + "/balances"),
+            FairHiveAPI.get("/rooms/" + room.id + "/chores"),
+            FairHiveAPI.get("/rooms/" + room.id + "/members"),
+          ])
+            .then(function (results) {
+              var expenses = results[0];
+              var balances = results[1];
+              var chores = results[2];
+              var members = results[3];
+              var totalExpenses = expenses.reduce(function (a, e) {
+                return a + (e.amount || 0);
+              }, 0);
+              var pendingChores = chores.filter(function (c) {
+                return c.currentAssignment && !c.currentAssignment.completed;
+              }).length;
+              var roomMembers = members ? members.length : 0;
+
+              // Calculate this month's expenses
+              var now = new Date();
+              var thisMonth = expenses.filter(function (e) {
+                if (!e.createdAt) return false;
+                var expenseDate = new Date(e.createdAt);
+                return (
+                  expenseDate.getMonth() === now.getMonth() &&
+                  expenseDate.getFullYear() === now.getFullYear()
+                );
+              });
+              var thisMonthTotal = thisMonth.reduce(function (a, e) {
+                return a + (e.amount || 0);
+              }, 0);
+
+              // Update welcome name
+              var user = FairHiveAuth.getUser();
+              var welcomeNameEl = document.getElementById("welcomeName");
+              if (welcomeNameEl && user) {
+                var displayName =
+                  user.displayName || user.name || user.email || "User";
+                welcomeNameEl.textContent = "Hello, " + displayName + "!";
+              }
+
+              summaryGrid.innerHTML =
+                '<div class="summary-card"><div class="icon-wrap primary"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><div><div class="value">₹' +
+                totalExpenses.toFixed(2) +
+                '</div><div class="label">Total Expenses</div></div></div>' +
+                '<div class="summary-card"><div class="icon-wrap warning"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg></div><div><div class="value">' +
+                pendingChores +
+                '</div><div class="label">Pending Chores</div></div></div>' +
+                '<div class="summary-card"><div class="icon-wrap success"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg></div><div><div class="value">' +
+                roomMembers +
+                '</div><div class="label">Room Members</div></div></div>' +
+                '<div class="summary-card"><div class="icon-wrap danger"><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg></div><div><div class="value">' +
+                thisMonthTotal.toFixed(0) +
+                '</div><div class="label">This Month</div></div></div>';
+            })
+            .catch(function () {
+              summaryGrid.innerHTML =
+                '<p class="alert alert-error">Failed to load summary.</p>';
+            });
+        }
+
+        document
+          .getElementById("btnCreateRoom")
+          .addEventListener("click", function () {
+            document.getElementById("createRoomModal").style.display = "flex";
+          });
+        document
+          .getElementById("createRoomCancel")
+          .addEventListener("click", function () {
+            document.getElementById("createRoomModal").style.display = "none";
+          });
+        document
+          .getElementById("createRoomSubmit")
+          .addEventListener("click", function () {
+            var name =
+              document.getElementById("createRoomName").value.trim() ||
+              "My Room";
+            FairHiveAPI.post("/rooms", { name: name }).then(function (data) {
+              FairHiveAuth.setCurrentRoom({
+                id: data.id,
+                name: data.name,
+                code: data.code,
+              });
+              document.getElementById("createRoomModal").style.display = "none";
+              showRoom();
+              if (document.getElementById("roomLabel"))
+                document.getElementById("roomLabel").textContent =
+                  data.name + " (" + data.code + ")";
+            });
+          });
+
+        document
+          .getElementById("btnJoinRoom")
+          .addEventListener("click", function () {
+            document.getElementById("joinRoomModal").style.display = "flex";
+            document.getElementById("joinError").style.display = "none";
+          });
+        document
+          .getElementById("joinRoomCancel")
+          .addEventListener("click", function () {
+            document.getElementById("joinRoomModal").style.display = "none";
+          });
+        document
+          .getElementById("joinRoomSubmit")
+          .addEventListener("click", function () {
+            var code = document
+              .getElementById("joinRoomCode")
+              .value.trim()
+              .toUpperCase();
+            document.getElementById("joinError").style.display = "none";
+            FairHiveAPI.post("/rooms/join", { code: code })
+              .then(function (data) {
+                FairHiveAuth.setCurrentRoom({
+                  id: data.id,
+                  name: data.name,
+                  code: data.code,
+                });
+                document.getElementById("joinRoomModal").style.display = "none";
+                showRoom();
+                if (document.getElementById("roomLabel"))
+                  document.getElementById("roomLabel").textContent =
+                    data.name + " (" + data.code + ")";
+              })
+              .catch(function (err) {
+                var el = document.getElementById("joinError");
+                el.textContent = (err.body && err.body.error) || "Join failed";
+                el.style.display = "block";
+              });
+          });
+
+        showRoom();
+      })();
+    </script>
+  </body>
+</html>

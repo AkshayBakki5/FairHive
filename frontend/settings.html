@@ -1,0 +1,150 @@
+k<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings – FairHive</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages/settings.css">
+</head>
+<body>
+  <div class="app">
+    <div id="sidebar-placeholder"></div>
+    <div class="main-wrap">
+      <div id="navbar-placeholder"></div>
+      <main class="main-content settings-page">
+        <h1 class="page-title">Settings</h1>
+
+        <!-- User Profile -->
+        <section class="settings-card settings-profile">
+          <header class="settings-card-header">
+            <div class="settings-card-icon settings-card-icon-primary">
+              <span>👤</span>
+            </div>
+            <div>
+              <h2 class="settings-card-title">User Profile</h2>
+              <p class="settings-card-subtitle">Manage your account information</p>
+            </div>
+          </header>
+          <div class="settings-card-body settings-profile-body">
+            <div class="settings-profile-main">
+              <div class="settings-avatar">
+                <span id="settingsAvatarInitial">U</span>
+              </div>
+              <div class="settings-profile-text">
+                <div class="settings-profile-name" id="settingsProfileName">User Name</div>
+                <div class="settings-profile-email" id="settingsProfileEmail">user@example.com</div>
+              </div>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" id="btnEditProfile">
+              Edit profile
+            </button>
+          </div>
+        </section>
+
+        <!-- Room Settings -->
+        <section class="settings-card">
+          <header class="settings-card-header">
+            <div class="settings-card-icon settings-card-icon-primary">
+              <span>🏠</span>
+            </div>
+            <div>
+              <h2 class="settings-card-title">Room Settings</h2>
+              <p class="settings-card-subtitle">Control your current room</p>
+            </div>
+          </header>
+          <div class="settings-card-body">
+            <div class="settings-row">
+              <div class="settings-row-main">
+                <div class="settings-row-icon">✏️</div>
+                <div>
+                  <div class="settings-row-title">Room name</div>
+                  <div class="settings-row-subtext" id="settingsRoomLabel">Update the name of this room</div>
+                </div>
+              </div>
+              <button type="button" class="btn btn-ghost btn-sm" id="btnEditRoomName">Edit</button>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-main">
+                <div class="settings-row-icon">➕</div>
+                <div>
+                  <div class="settings-row-title">Invite members</div>
+                  <div class="settings-row-subtext">Share a link or code to join</div>
+                </div>
+              </div>
+              <button type="button" class="btn btn-primary btn-sm" id="btnInviteMembers">Invite</button>
+            </div>
+            <div class="settings-row">
+              <div class="settings-row-main">
+                <div class="settings-row-icon">👥</div>
+                <div>
+                  <div class="settings-row-title">Manage members</div>
+                  <div class="settings-row-subtext">View or remove members from this room</div>
+                </div>
+              </div>
+              <a href="members.html" class="btn btn-ghost btn-sm">Open</a>
+            </div>
+            <div class="settings-row settings-row-danger">
+              <div class="settings-row-main">
+                <div class="settings-row-icon">🚪</div>
+                <div>
+                  <div class="settings-row-title">Leave room</div>
+                  <div class="settings-row-subtext">You will lose access to this room</div>
+                </div>
+              </div>
+              <button type="button" class="btn btn-danger btn-sm" id="btnLeaveRoom">Leave</button>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/notifications.js"></script>
+  <script>
+    (function () {
+      if (!FairHiveAuth.guard()) return;
+      FairHiveLayout.initLayout();
+
+      var user = FairHiveAuth.getUser() || {};
+      var room = FairHiveAuth.getCurrentRoom() || null;
+
+      // Populate profile
+      var name = user.displayName || user.email || 'User';
+      var email = user.email || '';
+      var initial = name ? name.charAt(0).toUpperCase() : 'U';
+      document.getElementById('settingsProfileName').textContent = name;
+      document.getElementById('settingsProfileEmail').textContent = email;
+      document.getElementById('settingsAvatarInitial').textContent = initial;
+
+      // Populate room label
+      if (room) {
+        document.getElementById('settingsRoomLabel').textContent = room.name + ' (' + room.code + ')';
+      }
+
+      // Basic handlers (placeholders for now)
+      document.getElementById('btnEditProfile').addEventListener('click', function () {
+        // could navigate to a profile page / open modal later
+        alert('Profile editing coming soon.');
+      });
+
+      document.getElementById('btnEditRoomName').addEventListener('click', function () {
+        alert('Room name editing coming soon.');
+      });
+
+      document.getElementById('btnInviteMembers').addEventListener('click', function () {
+        window.location.href = 'members.html';
+      });
+
+      document.getElementById('btnLeaveRoom').addEventListener('click', function () {
+        alert('Leaving room can be implemented here.');
+      });
+    })();
+  </script>
+</body>
+</html>
+

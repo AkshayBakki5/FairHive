@@ -1,0 +1,233 @@
+/* Settings Page */
+
+.settings-page {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.settings-card {
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.settings-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.settings-card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.settings-card-icon-primary {
+  background: rgba(124, 58, 237, 0.08);
+  color: var(--primary);
+}
+
+.settings-card-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  margin: 0;
+}
+
+.settings-card-subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  margin-top: 0.1rem;
+}
+
+.settings-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Profile section */
+.settings-profile-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.settings-profile-main {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.settings-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  background: var(--gradient-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-lg);
+}
+
+.settings-profile-name {
+  font-weight: var(--font-weight-semibold);
+}
+
+.settings-profile-email {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+/* Rows */
+.settings-row,
+.settings-row-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+}
+
+.settings-row + .settings-row,
+.settings-row-link + .settings-row-link {
+  border-top: 1px solid var(--border);
+}
+
+.settings-row-main {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.settings-row-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius);
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.settings-row-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.settings-row-subtext {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.settings-row-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.settings-row-chevron {
+  font-size: 1.25rem;
+  color: var(--text-muted);
+}
+
+.settings-row-danger {
+  border-top: 1px solid var(--border);
+  color: var(--danger);
+}
+
+.settings-row-muted {
+  border-top: 1px solid var(--border);
+}
+
+/* Toggles */
+.settings-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 42px;
+  height: 24px;
+}
+
+.settings-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.settings-toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #e5e7eb;
+  transition: 0.2s;
+  border-radius: 999px;
+}
+
+.settings-toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  top: 3px;
+  background-color: white;
+  transition: 0.2s;
+  border-radius: 999px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.settings-toggle input:checked + .settings-toggle-slider {
+  background: var(--gradient-primary);
+}
+
+.settings-toggle input:checked + .settings-toggle-slider:before {
+  transform: translateX(18px);
+}
+
+/* Selects */
+.settings-select {
+  min-width: 130px;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--card);
+  font-size: var(--font-size-sm);
+  color: var(--text);
+}
+
+@media (max-width: 640px) {
+  .settings-page {
+    padding-bottom: 4rem;
+  }
+
+  .settings-card {
+    padding: 1rem 1rem;
+  }
+
+  .settings-row,
+  .settings-row-link {
+    flex-wrap: wrap;
+  }
+
+  .settings-select {
+    width: 100%;
+  }
+}
+

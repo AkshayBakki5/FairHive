@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expense Tracker – FairHive</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages/expenses.css">
+</head>
+<body>
+  <div class="app">
+    <div id="sidebar-placeholder"></div>
+    <div class="main-wrap">
+      <div id="navbar-placeholder"></div>
+      <main class="main-content">
+        <div id="no-room" class="alert alert-warning" style="display: none;">Select or create a room from the Dashboard.</div>
+        
+        <div id="has-room" style="display: none;">
+          <!-- Top Section: Room Name & Month Selector -->
+          <div class="expense-header">
+            <div class="room-name-section">
+              <h1 class="room-name" id="roomNameDisplay">FairHive – Room</h1>
+            </div>
+            <div class="month-selector">
+              <button type="button" class="month-btn" id="btnLastMonth">Last Month</button>
+              <button type="button" class="month-btn month-btn-active" id="btnThisMonth">This Month</button>
+            </div>
+          </div>
+
+          <!-- Summary Cards -->
+          <div class="expense-summary-grid">
+            <div class="expense-summary-card">
+              <div class="summary-icon summary-icon-primary">💰</div>
+              <div class="summary-content">
+                <div class="summary-value" id="totalExpenses">₹0</div>
+                <div class="summary-label">Total Expenses</div>
+              </div>
+            </div>
+            <div class="expense-summary-card expense-summary-card-danger">
+              <div class="summary-icon summary-icon-danger">👤</div>
+              <div class="summary-content">
+                <div class="summary-value" id="youOwe">₹0</div>
+                <div class="summary-label">You Owe</div>
+              </div>
+            </div>
+            <div class="expense-summary-card expense-summary-card-success">
+              <div class="summary-icon summary-icon-success">👤</div>
+              <div class="summary-content">
+                <div class="summary-value" id="youGet">₹0</div>
+                <div class="summary-label">You Get</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="quick-actions">
+            <button type="button" class="btn btn-primary btn-lg" id="btnAddExpense">
+              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                <path stroke-width="2" d="M12 4v16m8-8H4"/>
+              </svg>
+              Add Expense
+            </button>
+            <button type="button" class="btn btn-secondary btn-lg" id="btnSettleUp">
+              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right: 0.5rem;">
+                <path stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Settle Up
+            </button>
+          </div>
+
+          <!-- Recent Expenses -->
+          <div class="card" style="margin-top: 1.5rem;">
+            <div class="card-header">Recent Expenses</div>
+            <div class="card-body">
+              <div id="recentExpenses" class="recent-expenses-list"></div>
+              <div id="emptyRecent" class="empty-state" style="display: none;">No recent expenses.</div>
+            </div>
+          </div>
+
+          <!-- Balance Summary -->
+          <div class="card" style="margin-top: 1.5rem;">
+            <div class="card-header">Balance Summary</div>
+            <div class="card-body">
+              <div id="balanceSummary" class="balance-summary"></div>
+              <div id="settlementSuggestions" class="settlement-suggestions" style="display: none;"></div>
+            </div>
+          </div>
+
+          <!-- Expense List with Filters -->
+          <div class="card" style="margin-top: 1.5rem;">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+              <span>All Expenses</span>
+              <div class="filter-buttons">
+                <button type="button" class="filter-btn active" data-filter="all">All</button>
+                <button type="button" class="filter-btn" data-filter="category">Category</button>
+                <button type="button" class="filter-btn" data-filter="member">Member</button>
+                <button type="button" class="filter-btn" data-filter="date">Date</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div id="filterPanel" class="filter-panel" style="display: none;">
+                <div id="categoryFilter" class="filter-group" style="display: none;">
+                  <label>Category:</label>
+                  <select id="filterCategory" class="filter-select">
+                    <option value="">All Categories</option>
+                    <option value="rent">Rent</option>
+                    <option value="electricity">Electricity</option>
+                    <option value="water">Water</option>
+                    <option value="internet">Internet</option>
+                    <option value="groceries">Groceries</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div id="memberFilter" class="filter-group" style="display: none;">
+                  <label>Member:</label>
+                  <select id="filterMember" class="filter-select">
+                    <option value="">All Members</option>
+                  </select>
+                </div>
+                <div id="dateFilter" class="filter-group" style="display: none;">
+                  <label>Date Range:</label>
+                  <input type="date" id="filterDateFrom" class="filter-input">
+                  <span style="margin: 0 0.5rem;">to</span>
+                  <input type="date" id="filterDateTo" class="filter-input">
+                </div>
+              </div>
+              <div id="loading" class="loading-wrap"><div class="spinner"></div></div>
+              <div id="expenseList" class="expense-list" style="display: none;"></div>
+              <div id="emptyExpenses" class="empty-state" style="display: none;">No expenses yet. Add one above.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add Expense Modal (matches design: Title, Amount, Category, Date, Split Type, Split Between, Receipt) -->
+        <div id="addExpenseModal" class="modal-backdrop" style="display: none;">
+          <div class="modal modal-large add-expense-modal">
+            <div class="modal-header">
+              Add New Expense
+              <button type="button" class="modal-close" id="addExpenseClose" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+              <div id="addExpenseError" class="alert alert-error" style="display: none;"></div>
+
+              <div class="form-group add-expense-field">
+                <label for="expenseTitle">Title</label>
+                <input
+                  type="text"
+                  id="expenseTitle"
+                  class="form-input"
+                  placeholder="e.g., Grocery Shopping"
+                >
+              </div>
+              <div class="form-group add-expense-field">
+                <label for="expenseAmount">Amount</label>
+                <div class="input-currency-wrap">
+                  <span class="input-currency-symbol">₹</span>
+                  <input type="number" id="expenseAmount" class="form-input input-currency" step="0.01" min="0" value="0" placeholder="0.00">
+                </div>
+              </div>
+              <div class="form-row form-row-two add-expense-field">
+                <div class="form-group">
+                  <label>Category</label>
+                  <select id="expenseCategory" class="form-select">
+                    <option value="rent">Rent</option>
+                    <option value="electricity">Electricity</option>
+                    <option value="water">Water</option>
+                    <option value="internet">Internet</option>
+                    <option value="groceries">Groceries</option>
+                    <option value="other" selected>Other</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="expenseDate">Date</label>
+                  <input
+                    type="date"
+                    id="expenseDate"
+                    class="form-input"
+                  >
+                </div>
+              </div>
+              <div class="form-group add-expense-field">
+                <label for="expensePaidBy">Paid By</label>
+                <select id="expensePaidBy" class="form-select">
+                  <option value="">Select member...</option>
+                </select>
+              </div>
+
+              <div class="form-group add-expense-field">
+                <label class="split-type-label">Split Type</label>
+                <div class="split-type-buttons">
+                  <button type="button" class="split-type-btn active" data-split="equal" title="Split equally">
+                    <span class="split-type-icon">=</span>
+                    <span>Equal</span>
+                  </button>
+                  <button type="button" class="split-type-btn" data-split="exact" title="Enter exact amounts">
+                    <span class="split-type-icon">#</span>
+                    <span>Exact</span>
+                  </button>
+                  <button type="button" class="split-type-btn" data-split="percent" title="Split by percentage">
+                    <span class="split-type-icon">%</span>
+                    <span>Percent</span>
+                  </button>
+                  <button type="button" class="split-type-btn" data-split="shares" title="Split by shares">
+                    <span class="split-type-icon">👥</span>
+                    <span>Shares</span>
+                  </button>
+                </div>
+                <input type="hidden" name="splitType" id="expenseSplitType" value="equal">
+              </div>
+
+              <div class="form-group add-expense-field">
+                <label>Split Between</label>
+                <div id="splitMembersList" class="split-members-list"></div>
+                <div id="splitMembersError" class="split-members-error" style="display: none;">
+                  <span class="split-members-error-icon">!</span>
+                  Select at least one member
+                </div>
+              </div>
+
+              <div id="customSplitsWrap" class="add-expense-field" style="display: none;">
+                <div id="customSplitsList" class="custom-splits-list"></div>
+                <div id="splitTotal" class="split-total">
+                  <strong>Total: ₹<span id="splitTotalAmount">0.00</span></strong>
+                </div>
+              </div>
+
+              <div class="form-group add-expense-field">
+                <label class="receipt-label">Receipt/Bill (Optional)</label>
+                <div id="expenseReceiptZone" class="receipt-upload-zone">
+                  <input type="file" id="expenseBillFile" accept="image/*,.pdf" class="receipt-upload-input">
+                  <span class="receipt-upload-icon">↑</span>
+                  <span class="receipt-upload-text">Upload receipt image</span>
+                </div>
+                <input
+                  type="url"
+                  id="expenseBillUrl"
+                  placeholder="Image URL (optional)"
+                  class="form-input form-input-margin-top"
+                  style="display: none;"
+                >
+              </div>
+
+              <button type="button" class="btn btn-primary btn-block add-expense-submit-btn" id="addExpenseSubmit">Add Expense</button>
+            </div>
+            <div class="modal-footer modal-footer-minimal">
+              <button type="button" class="btn btn-ghost" id="addExpenseCancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Settle Payment Modal -->
+        <div id="settlePaymentModal" class="modal-backdrop" style="display: none;">
+          <div class="modal">
+            <div class="modal-header">Settle Payment <button type="button" class="modal-close" id="settlePaymentClose">&times;</button></div>
+            <div class="modal-body">
+              <div id="settlePaymentError" class="alert alert-error" style="display: none;"></div>
+              <div class="form-group">
+                <label>From (Who is paying)</label>
+                <select id="settleFrom" class="form-select">
+                  <option value="">Select member...</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>To (Who is receiving)</label>
+                <select id="settleTo" class="form-select">
+                  <option value="">Select member...</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <input type="number" id="settleAmount" placeholder=" " step="0.01" min="0" required>
+                <label for="settleAmount">Amount (₹)</label>
+              </div>
+              <div class="form-group">
+                <label>Payment Mode (Optional)</label>
+                <select id="settlePaymentMode" class="form-select">
+                  <option value="">Select payment mode...</option>
+                  <option value="cash">Cash</option>
+                  <option value="upi">UPI</option>
+                  <option value="bank">Bank Transfer</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <input type="date" id="settleDate" class="form-input" placeholder=" ">
+                <label for="settleDate">Date</label>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-ghost" id="settlePaymentCancel">Cancel</button>
+              <button type="button" class="btn btn-primary" id="settlePaymentSubmit">Confirm Settlement</button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/expenses.js"></script>
+</body>
+</html>
