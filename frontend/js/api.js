@@ -4,6 +4,7 @@
 (function (global) {
   const BASE_URL = (function () {
     if (typeof window !== 'undefined' && window.FAIRHIVE_API_URL) return window.FAIRHIVE_API_URL;
+    if (typeof window !== 'undefined') return window.location.origin + '/api';
     return 'http://localhost:3000/api';
   })();
 
