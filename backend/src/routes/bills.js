@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const billsController = require('../controllers/billsController');
+const c = require('../controllers/billsController');
 const { auth } = require('../middleware/auth');
 
 router.use(auth);
 
-router.patch('/:id', billsController.update);
+router.patch('/:id', c.update);
+router.delete('/:id', c.remove);
 
 module.exports = router;

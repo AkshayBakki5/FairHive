@@ -1,14 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const notificationsController = require('../controllers/notificationsController');
+const c = require('../controllers/notificationsController');
 const { auth } = require('../middleware/auth');
 
 router.use(auth);
 
-router.post('/create', notificationsController.create);
-router.get('/', notificationsController.listMy);
-router.patch('/:id/read', notificationsController.markRead);
-router.delete('/:id', notificationsController.remove);
+router.get('/',                  c.listMy);
+router.post('/create',           c.create);
+router.patch('/read-all',        c.markAllRead);
+router.patch('/:id/read',        c.markRead);
+router.delete('/:id',            c.remove);
 
 module.exports = router;
-

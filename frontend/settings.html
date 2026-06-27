@@ -1,4 +1,4 @@
-k<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -20,9 +20,7 @@ k<!DOCTYPE html>
         <!-- User Profile -->
         <section class="settings-card settings-profile">
           <header class="settings-card-header">
-            <div class="settings-card-icon settings-card-icon-primary">
-              <span>👤</span>
-            </div>
+            <div class="settings-card-icon settings-card-icon-primary"><span>👤</span></div>
             <div>
               <h2 class="settings-card-title">User Profile</h2>
               <p class="settings-card-subtitle">Manage your account information</p>
@@ -30,26 +28,25 @@ k<!DOCTYPE html>
           </header>
           <div class="settings-card-body settings-profile-body">
             <div class="settings-profile-main">
-              <div class="settings-avatar">
-                <span id="settingsAvatarInitial">U</span>
-              </div>
+              <div class="settings-avatar"><span id="settingsAvatarInitial">U</span></div>
               <div class="settings-profile-text">
-                <div class="settings-profile-name" id="settingsProfileName">User Name</div>
+                <div class="settings-profile-name"  id="settingsProfileName">User Name</div>
                 <div class="settings-profile-email" id="settingsProfileEmail">user@example.com</div>
               </div>
             </div>
-            <button type="button" class="btn btn-secondary btn-sm" id="btnEditProfile">
-              Edit profile
-            </button>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+              <button type="button" class="btn btn-secondary btn-sm" id="btnEditProfile">Edit profile</button>
+              <button type="button" class="btn btn-ghost btn-sm"      id="btnChangePassword">Change password</button>
+            </div>
           </div>
+          <div id="profileSuccess"  class="alert alert-success" style="display:none;margin:0 1.5rem 1rem;"></div>
+          <div id="passwordSuccess" class="alert alert-success" style="display:none;margin:0 1.5rem 1rem;"></div>
         </section>
 
         <!-- Room Settings -->
         <section class="settings-card">
           <header class="settings-card-header">
-            <div class="settings-card-icon settings-card-icon-primary">
-              <span>🏠</span>
-            </div>
+            <div class="settings-card-icon settings-card-icon-primary"><span>🏠</span></div>
             <div>
               <h2 class="settings-card-title">Room Settings</h2>
               <p class="settings-card-subtitle">Control your current room</p>
@@ -61,11 +58,12 @@ k<!DOCTYPE html>
                 <div class="settings-row-icon">✏️</div>
                 <div>
                   <div class="settings-row-title">Room name</div>
-                  <div class="settings-row-subtext" id="settingsRoomLabel">Update the name of this room</div>
+                  <div class="settings-row-subtext" id="settingsRoomLabel">No room selected</div>
                 </div>
               </div>
               <button type="button" class="btn btn-ghost btn-sm" id="btnEditRoomName">Edit</button>
             </div>
+            <div id="roomNameSuccess" class="alert alert-success" style="display:none;margin:0.5rem 0;"></div>
             <div class="settings-row">
               <div class="settings-row-main">
                 <div class="settings-row-icon">➕</div>
@@ -101,50 +99,73 @@ k<!DOCTYPE html>
       </main>
     </div>
   </div>
+
+  <!-- Edit profile modal -->
+  <div id="profileModal" class="modal-backdrop" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">Edit profile <button type="button" class="modal-close" id="profileClose">&times;</button></div>
+      <div class="modal-body">
+        <div id="profileError" class="alert alert-error" style="display:none;"></div>
+        <div class="form-group">
+          <input type="text" id="inputDisplayName" placeholder=" " required>
+          <label for="inputDisplayName">Display name</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost"    id="profileCancel">Cancel</button>
+        <button type="button" class="btn btn-primary"  id="profileSubmit">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change password modal -->
+  <div id="passwordModal" class="modal-backdrop" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">Change password <button type="button" class="modal-close" id="passwordClose">&times;</button></div>
+      <div class="modal-body">
+        <div id="passwordError" class="alert alert-error" style="display:none;"></div>
+        <div class="form-group">
+          <input type="password" id="inputCurrentPw" placeholder=" " required>
+          <label for="inputCurrentPw">Current password</label>
+        </div>
+        <div class="form-group">
+          <input type="password" id="inputNewPw" placeholder=" " required>
+          <label for="inputNewPw">New password</label>
+        </div>
+        <div class="form-group">
+          <input type="password" id="inputConfirmPw" placeholder=" " required>
+          <label for="inputConfirmPw">Confirm new password</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost"   id="passwordCancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="passwordSubmit">Change</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit room name modal -->
+  <div id="roomNameModal" class="modal-backdrop" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">Rename room <button type="button" class="modal-close" id="roomNameClose">&times;</button></div>
+      <div class="modal-body">
+        <div id="roomNameError" class="alert alert-error" style="display:none;"></div>
+        <div class="form-group">
+          <input type="text" id="inputRoomName" placeholder=" " required>
+          <label for="inputRoomName">Room name</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost"   id="roomNameCancel">Cancel</button>
+        <button type="button" class="btn btn-primary" id="roomNameSubmit">Save</button>
+      </div>
+    </div>
+  </div>
+
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/layout.js"></script>
   <script src="js/notifications.js"></script>
-  <script>
-    (function () {
-      if (!FairHiveAuth.guard()) return;
-      FairHiveLayout.initLayout();
-
-      var user = FairHiveAuth.getUser() || {};
-      var room = FairHiveAuth.getCurrentRoom() || null;
-
-      // Populate profile
-      var name = user.displayName || user.email || 'User';
-      var email = user.email || '';
-      var initial = name ? name.charAt(0).toUpperCase() : 'U';
-      document.getElementById('settingsProfileName').textContent = name;
-      document.getElementById('settingsProfileEmail').textContent = email;
-      document.getElementById('settingsAvatarInitial').textContent = initial;
-
-      // Populate room label
-      if (room) {
-        document.getElementById('settingsRoomLabel').textContent = room.name + ' (' + room.code + ')';
-      }
-
-      // Basic handlers (placeholders for now)
-      document.getElementById('btnEditProfile').addEventListener('click', function () {
-        // could navigate to a profile page / open modal later
-        alert('Profile editing coming soon.');
-      });
-
-      document.getElementById('btnEditRoomName').addEventListener('click', function () {
-        alert('Room name editing coming soon.');
-      });
-
-      document.getElementById('btnInviteMembers').addEventListener('click', function () {
-        window.location.href = 'members.html';
-      });
-
-      document.getElementById('btnLeaveRoom').addEventListener('click', function () {
-        alert('Leaving room can be implemented here.');
-      });
-    })();
-  </script>
+  <script src="js/settings.js"></script>
 </body>
 </html>
-

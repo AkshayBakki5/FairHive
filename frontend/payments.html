@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payments – FairHive</title>
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+  <div class="app">
+    <div id="sidebar-placeholder"></div>
+    <div class="main-wrap">
+      <div id="navbar-placeholder"></div>
+      <main class="main-content">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem;">
+          <h1 class="page-title" style="margin-bottom:0;">Payments</h1>
+          <button type="button" class="btn btn-primary" id="btnAddPayment">Record payment</button>
+        </div>
+        <p style="color:var(--color-text-muted);margin-bottom:1.5rem;">
+          Record debt-settlement payments between members. These are reflected in the balance calculations.
+        </p>
+        <div id="no-room" class="alert alert-warning" style="display:none;">Select or create a room from the Dashboard.</div>
+        <div id="loading" class="loading-wrap"><div class="spinner"></div></div>
+        <div id="paymentList" style="display:none;"></div>
+        <div id="emptyPayments" class="empty-state" style="display:none;">No payments recorded yet.</div>
+
+        <!-- Add payment modal -->
+        <div id="addPaymentModal" class="modal-backdrop" style="display:none;">
+          <div class="modal">
+            <div class="modal-header">Record payment <button type="button" class="modal-close" id="addPaymentClose">&times;</button></div>
+            <div class="modal-body">
+              <div id="addPaymentError" class="alert alert-error" style="display:none;"></div>
+              <div class="form-group">
+                <select id="payToUser" style="width:100%;padding:0.75rem;border:1px solid var(--color-border);border-radius:var(--radius-md);background:var(--color-bg);color:var(--color-text);">
+                  <option value="">-- Select recipient --</option>
+                </select>
+                <label style="position:static;font-size:var(--font-size-sm);color:var(--color-text-muted);">Pay to (member receiving money)</label>
+              </div>
+              <div class="form-group">
+                <input type="number" id="payAmount" placeholder=" " step="0.01" min="0.01" required>
+                <label for="payAmount">Amount (₹)</label>
+              </div>
+              <div class="form-group">
+                <input type="text" id="payNote" placeholder=" ">
+                <label for="payNote">Note (optional)</label>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-ghost"   id="addPaymentCancel">Cancel</button>
+              <button type="button" class="btn btn-primary" id="addPaymentSubmit">Record</button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/payments.js"></script>
+</body>
+</html>

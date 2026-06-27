@@ -1,147 +1,102 @@
 const store = require('../store/jsonStore');
 
-/**
- * GET /api/rooms/:id/analytics/summary
- * Aggregate expenses, balances and chores into a single JSON payload.
- */
+/** GET /api/rooms/:id/analytics/summary */
 async function getRoomSummary(req, res, next) {
   try {
     const roomId = req.params.id;
-    const uid = req.user.id;
-
-    const member = store.getRoomMember(roomId, uid);
+    const uid    = req.user.id;
+    const member = await store.getRoomMember(roomId, uid);
     if (!member) return res.status(403).json({ error: 'Not a member' });
 
-    const room = store.getRoomById(roomId);
-    const expenses = store.getExpenses(roomId) || [];
-    const chores = store.getChores(roomId) || [];
-    const members = store.getRoomMembers(roomId) || [];
-    const users = store.load('users') || [];
+    const room     = await store.getRoomById(roomId);
+    const expenses = await store.getExpenses(roomId) || [];
+    const chores   = await store.getChores(roomId) || [];
+    const members  = await store.getRoomMembers(roomId) || [];
+    const users    = await store.getUsers() || [];
 
     const memberName = (userId) => {
-      const u = users.find((x) => x.id === userId);
-      if (u && (u.displayName || u.email)) return u.displayName || u.email;
-      const m = members.find((mm) => mm.userId === userId);
-      return (m && m.displayName) || (u && u.email) || userId.slice(0, 8);
+      const id = userId ? userId.toString() : '';
+      const u  = users.find(x => x.id.toString() === id);
+      return (u && (u.displayName || u.email)) || id.slice(0, 8);
     };
 
     const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-
-    // 1) Total expenses (current month)
     let totalCurrentMonth = 0;
-    const categoryTotals = {};
-    const userTotals = {};
+    const categoryTotals  = {};
+    const userTotals      = {};
 
-    expenses.forEach((e) => {
+    expenses.forEach(e => {
       const amount = e.amount || 0;
-      const cat = e.category || 'other';
-      const payer = e.addedBy;
-
-      // Category totals
+      const cat    = e.category || 'other';
+      const payer  = e.addedBy ? e.addedBy.toString() : null;
       categoryTotals[cat] = (categoryTotals[cat] || 0) + amount;
-
-      // User totals (based on payer)
       if (payer) userTotals[payer] = (userTotals[payer] || 0) + amount;
-
-      // Current month total
       if (e.createdAt) {
         const d = new Date(e.createdAt);
-        if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
-          totalCurrentMonth += amount;
-        }
+        if (d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) totalCurrentMonth += amount;
       }
     });
 
-    // 4) Monthly spending trend – last 6 months
+    // Monthly trend
     const monthlyTrendMap = {};
-    expenses.forEach((e) => {
+    expenses.forEach(e => {
       if (!e.createdAt) return;
-      const d = new Date(e.createdAt);
+      const d   = new Date(e.createdAt);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       monthlyTrendMap[key] = (monthlyTrendMap[key] || 0) + (e.amount || 0);
     });
-
-    const trendKeys = Object.keys(monthlyTrendMap).sort();
-    const last6Keys = trendKeys.slice(-6);
-    const monthlyTrend = last6Keys.map((key) => {
+    const last6Keys = Object.keys(monthlyTrendMap).sort().slice(-6);
+    const monthlyTrend = last6Keys.map(key => {
       const [y, m] = key.split('-');
-      const monthLabel = new Date(parseInt(y, 10), parseInt(m, 10) - 1, 1).toLocaleString('default', {
-        month: 'short',
-      });
-      return { month: monthLabel, amount: monthlyTrendMap[key] };
+      const label  = new Date(+y, +m - 1, 1).toLocaleString('default', { month: 'short' });
+      return { month: label, amount: monthlyTrendMap[key] };
     });
 
-    // 5) Net balance per user: (amount paid by user) - (user's share)
+    // Net balances
     const balanceByUser = {};
-    expenses.forEach((e) => {
-      const payerId = e.addedBy;
-      const amount = e.amount || 0;
-      if (payerId) {
-        balanceByUser[payerId] = (balanceByUser[payerId] || 0) + amount;
-      }
-      const splits = store.getExpenseSplits(e.id);
-      splits.forEach((s) => {
-        const userId = s.userId;
-        balanceByUser[userId] = (balanceByUser[userId] || 0) - (s.amount || 0);
+    for (const e of expenses) {
+      const payerId = e.addedBy ? e.addedBy.toString() : null;
+      if (payerId) balanceByUser[payerId] = (balanceByUser[payerId] || 0) + (e.amount || 0);
+      const splits = await store.getExpenseSplits(e.id);
+      splits.forEach(s => {
+        const sid = s.userId ? s.userId.toString() : null;
+        if (sid) balanceByUser[sid] = (balanceByUser[sid] || 0) - (s.amount || 0);
       });
-    });
-    const balances = Object.keys(balanceByUser).map((userId) => ({
-      user: memberName(userId),
-      user_id: userId,
-      balance: balanceByUser[userId],
+    }
+    // Include payments in balances
+    const payments = await store.getPayments(roomId);
+    for (const p of payments) {
+      const from = p.fromUser ? p.fromUser.toString() : null;
+      const to   = p.toUser   ? p.toUser.toString()   : null;
+      if (from) balanceByUser[from] = (balanceByUser[from] || 0) - p.amount;
+      if (to)   balanceByUser[to]   = (balanceByUser[to]   || 0) + p.amount;
+    }
+    const balances = Object.keys(balanceByUser).map(uid => ({
+      user: memberName(uid), user_id: uid, balance: balanceByUser[uid],
     }));
 
-    // 6) Chore completion stats per user
+    // Chore stats
     const choreStatsMap = {};
-    chores.forEach((chore) => {
-      const assigns = store.getChoreAssignments(chore.id) || [];
-      assigns.forEach((a) => {
+    for (const chore of chores) {
+      const assigns = await store.getChoreAssignments(chore.id) || [];
+      assigns.forEach(a => {
         if (!a.completed || !a.completedAt) return;
-        const userId = a.completedBy || a.userId;
-        if (!userId) return;
-        choreStatsMap[userId] = (choreStatsMap[userId] || 0) + 1;
+        const userId = (a.completedBy || a.userId) ? (a.completedBy || a.userId).toString() : null;
+        if (userId) choreStatsMap[userId] = (choreStatsMap[userId] || 0) + 1;
       });
-    });
-    const choreStats = Object.keys(choreStatsMap).map((userId) => ({
-      user: memberName(userId),
-      user_id: userId,
-      completed: choreStatsMap[userId],
+    }
+    const choreStats = Object.keys(choreStatsMap).map(uid => ({
+      user: memberName(uid), user_id: uid, completed: choreStatsMap[uid],
     }));
 
-    // 2) Category breakdown
-    const categoryBreakdown = Object.keys(categoryTotals).map((cat) => ({
-      category: cat,
-      amount: categoryTotals[cat],
-    }));
+    const categoryBreakdown = Object.keys(categoryTotals).map(cat => ({ category: cat, amount: categoryTotals[cat] }));
+    const userSpending      = Object.keys(userTotals).map(uid => ({ user: memberName(uid), user_id: uid, amount: userTotals[uid] }));
 
-    // 3) Expense breakdown by user
-    const userSpending = Object.keys(userTotals).map((userId) => ({
-      user: memberName(userId),
-      user_id: userId,
-      amount: userTotals[userId],
-    }));
+    let mostExpensiveCategory = null, maxCat = -Infinity;
+    categoryBreakdown.forEach(c => { if (c.amount > maxCat) { maxCat = c.amount; mostExpensiveCategory = c.category; } });
 
-    // 7) Most expensive category
-    let mostExpensiveCategory = null;
-    let maxCategoryAmount = -Infinity;
-    categoryBreakdown.forEach((c) => {
-      if (c.amount > maxCategoryAmount) {
-        maxCategoryAmount = c.amount;
-        mostExpensiveCategory = c.category;
-      }
-    });
-
-    // 8) Top spender
-    let topSpender = null;
-    let topSpenderAmount = -Infinity;
-    userSpending.forEach((u) => {
-      if (u.amount > topSpenderAmount) {
-        topSpenderAmount = u.amount;
-        topSpender = u.user;
-      }
-    });
+    let topSpender = null, topAmt = -Infinity;
+    userSpending.forEach(u => { if (u.amount > topAmt) { topAmt = u.amount; topSpender = u.user; } });
 
     res.json({
       room: room ? { id: room.id, name: room.name } : null,
@@ -154,12 +109,7 @@ async function getRoomSummary(req, res, next) {
       top_spender: topSpender,
       most_expensive_category: mostExpensiveCategory,
     });
-  } catch (e) {
-    next(e);
-  }
+  } catch (e) { next(e); }
 }
 
-module.exports = {
-  getRoomSummary,
-};
-
+module.exports = { getRoomSummary };

@@ -1,12 +1,20 @@
 /**
  * FairHive Backend – Entry point
- * Starts Express server after loading env and initializing Firebase.
+ * Connects to MongoDB then starts Express server.
  */
 require('dotenv').config();
 const app = require('./app');
+const { connect } = require('./db/mongoose');
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-  console.log(`FairHive API running on http://localhost:${PORT}`);
-});
+connect()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`FairHive API running on http://localhost:${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('Failed to connect to MongoDB:', err.message);
+    process.exit(1);
+  });

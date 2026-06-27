@@ -1,311 +1,128 @@
-/**
- * JSON-based file storage for FairHive.
- * All data is stored in backend/data/*.json. Dates are serialized as ISO strings.
- */
-const fs = require('fs');
-const path = require('path');
+const User            = require('../models/User');
+const Room            = require('../models/Room');
+const RoomMember      = require('../models/RoomMember');
+const Expense         = require('../models/Expense');
+const ExpenseSplit    = require('../models/ExpenseSplit');
+const Chore           = require('../models/Chore');
+const ChoreAssignment = require('../models/ChoreAssignment');
+const Bill            = require('../models/Bill');
+const Payment         = require('../models/Payment');
+const Invite          = require('../models/Invite');
+const Notification    = require('../models/Notification');
 
-const DATA_DIR = path.join(__dirname, '..', '..', 'data');
-const COLLECTIONS = [
-  'users', 'rooms', 'roomMembers', 'expenses', 'expenseSplits',
-  'chores', 'choreAssignments', 'bills', 'payments', 'invites',
-  'notifications'
-];
+function toPlain(doc) {
+  if (!doc) return null;
+  const obj = doc.toObject ? doc.toObject({ virtuals: false }) : doc;
+  obj.id = obj._id.toString();
+  return obj;
+}
+function toList(docs) { return docs.map(toPlain); }
 
-function ensureDataDir() {
-  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-}
+// Users
+async function getUsers() { return toList(await User.find()); }
+async function getUserById(id) { try { return toPlain(await User.findById(id)); } catch { return null; } }
+async function getUserByEmail(email) { return toPlain(await User.findOne({ email: (email||'').toLowerCase() })); }
+async function addUser(data) { return toPlain(await User.create(data)); }
+async function updateUser(id, u) { try { return toPlain(await User.findByIdAndUpdate(id, u, { new: true })); } catch { return null; } }
 
-function getPath(collection) {
-  return path.join(DATA_DIR, `${collection}.json`);
-}
+// Rooms
+async function getRooms() { return toList(await Room.find()); }
+async function getRoomById(id) { try { return toPlain(await Room.findById(id)); } catch { return null; } }
+async function getRoomByCode(code) { return toPlain(await Room.findOne({ code: (code||'').toUpperCase() })); }
+async function addRoom(data) { return toPlain(await Room.create(data)); }
+async function updateRoom(id, u) { try { return toPlain(await Room.findByIdAndUpdate(id, u, { new: true })); } catch { return null; } }
+async function deleteRoom(id) { try { await Room.findByIdAndDelete(id); return true; } catch { return false; } }
 
-function load(collection) {
-  ensureDataDir();
-  const filePath = getPath(collection);
-  if (!fs.existsSync(filePath)) return [];
-  try {
-    const raw = fs.readFileSync(filePath, 'utf8');
-    return JSON.parse(raw);
-  } catch {
-    return [];
-  }
-}
+// RoomMembers
+async function getRoomMembers(roomId) { return toList(await RoomMember.find({ roomId })); }
+async function getRoomMember(roomId, userId) { try { return toPlain(await RoomMember.findOne({ roomId, userId })); } catch { return null; } }
+async function addRoomMember(data) { return toPlain(await RoomMember.create(data)); }
+async function updateRoomMember(id, u) { try { return toPlain(await RoomMember.findByIdAndUpdate(id, u, { new: true })); } catch { return null; } }
+async function deleteRoomMember(id) { try { await RoomMember.findByIdAndDelete(id); return true; } catch { return false; } }
+async function deleteRoomMemberByUserAndRoom(roomId, userId) { await RoomMember.deleteOne({ roomId, userId }); return true; }
 
-function save(collection, data) {
-  ensureDataDir();
-  fs.writeFileSync(getPath(collection), JSON.stringify(data, null, 2), 'utf8');
-}
+// Expenses
+async function getExpenses(roomId) { return toList(await Expense.find({ roomId }).sort({ createdAt: -1 })); }
+async function getExpenseById(id) { try { return toPlain(await Expense.findById(id)); } catch { return null; } }
+async function addExpense(data) { return toPlain(await Expense.create(data)); }
+async function updateExpense(id, u) { try { return toPlain(await Expense.findByIdAndUpdate(id, u, { new: true })); } catch { return null; } }
+async function deleteExpense(id) { try { await Expense.findByIdAndDelete(id); return true; } catch { return false; } }
 
-function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
-}
+// ExpenseSplits
+async function getExpenseSplits(expenseId) { return toList(await ExpenseSplit.find({ expenseId })); }
+async function getExpenseSplitByUser(expenseId, userId) { try { return toPlain(await ExpenseSplit.findOne({ expenseId, userId })); } catch { return null; } }
+async function addExpenseSplit(data) { return toPlain(await ExpenseSplit.create(data)); }
+async function updateExpenseSplit(id, u) { try { return toPlain(await ExpenseSplit.findByIdAndUpdate(id, u, { new: true })); } catch { return null; } }
+async function deleteExpenseSplitsByExpense(expenseId) { await ExpenseSplit.deleteMany({ expenseId }); }
 
-/** Serialize object: convert Date to ISO string for JSON storage */
-function serialize(obj) {
-  if (!obj || typeof obj !== 'object') return obj;
-  const out = {};
-  for (const [k, v] of Object.entries(obj)) {
-    if (v instanceof Date) out[k] = v.toISOString();
-    else if (v && typeof v === 'object' && !Array.isArray(v)) out[k] = serialize(v);
-    else out[k] = v;
-  }
-  return out;
-}
+// Chores
+async function getChores(roomId) { return toList(await Chore.find({ roomId })); }
+async function getChoreById(id) { try { return toPlain(await Chore.findById(id)); } catch { return null; } }
+async function addChore(data) { return toPlain(await Chore.create(data)); }
+async function updateChore(id, u) { try { return toPlain(await Chore.findByIdAndUpdate(id, u, { new: true })); } catch { return null; } }
+async function deleteChore(id) { try { await Chore.findByIdAndDelete(id); return true; } catch { return false; } }
 
-// --- Users ---
-function getUsers() { return load('users'); }
-function getUserById(id) { return load('users').find(u => u.id === id) || null; }
-function getUserByEmail(email) { return load('users').find(u => u.email === (email || '').toLowerCase()) || null; }
-function addUser(data) {
-  const list = load('users');
-  const id = generateId();
-  const record = { id, ...serialize(data) };
-  list.push(record);
-  save('users', list);
-  return { id, ...record };
-}
-function updateUser(id, updates) {
-  const list = load('users');
-  const i = list.findIndex(u => u.id === id);
-  if (i === -1) return null;
-  list[i] = { ...list[i], ...serialize(updates) };
-  save('users', list);
-  return list[i];
-}
+// ChoreAssignments
+async function getChoreAssignments(choreId) { return toList(await ChoreAssignment.find({ choreId }).sort({ dueDate: -1 })); }
+async function addChoreAssignment(data) { return toPlain(await ChoreAssignment.create(data)); }
+async function updateChoreAssignment(id, u) { try { return toPlain(await ChoreAssignment.findByIdAndUpdate(id, u, { new: true })); } catch { return null; } }
+async function deleteChoreAssignmentsByChore(choreId) { await ChoreAssignment.deleteMany({ choreId }); }
 
-// --- Rooms ---
-function getRooms() { return load('rooms'); }
-function getRoomById(id) { return load('rooms').find(r => r.id === id) || null; }
-function getRoomByCode(code) { return load('rooms').find(r => (r.code || '').toUpperCase() === (code || '').toUpperCase()) || null; }
-function addRoom(data) {
-  const list = load('rooms');
-  const id = generateId();
-  const record = { id, ...serialize(data) };
-  list.push(record);
-  save('rooms', list);
-  return { id, ...record };
-}
+// Bills
+async function getBills(roomId) { return toList(await Bill.find({ roomId }).sort({ dueDate: 1 })); }
+async function getBillById(id) { try { return toPlain(await Bill.findById(id)); } catch { return null; } }
+async function addBill(data) { return toPlain(await Bill.create(data)); }
+async function updateBill(id, u) { try { return toPlain(await Bill.findByIdAndUpdate(id, u, { new: true })); } catch { return null; } }
+async function deleteBill(id) { try { await Bill.findByIdAndDelete(id); return true; } catch { return false; } }
 
-// --- RoomMembers ---
-function getRoomMembers(roomId) { return load('roomMembers').filter(m => m.roomId === roomId); }
-function getRoomMember(roomId, userId) { return load('roomMembers').find(m => m.roomId === roomId && m.userId === userId) || null; }
-function addRoomMember(data) {
-  const list = load('roomMembers');
-  const id = generateId();
-  const record = { id, ...serialize(data) };
-  list.push(record);
-  save('roomMembers', list);
-  return { id, ...record };
-}
-function updateRoomMember(id, updates) {
-  const list = load('roomMembers');
-  const i = list.findIndex(m => m.id === id);
-  if (i === -1) return null;
-  list[i] = { ...list[i], ...serialize(updates) };
-  save('roomMembers', list);
-  return list[i];
-}
+// Payments
+async function getPayments(roomId) { return toList(await Payment.find({ roomId }).sort({ createdAt: -1 })); }
+async function getPaymentById(id) { try { return toPlain(await Payment.findById(id)); } catch { return null; } }
+async function addPayment(data) { return toPlain(await Payment.create(data)); }
+async function deletePayment(id) { try { await Payment.findByIdAndDelete(id); return true; } catch { return false; } }
 
-// --- Expenses ---
-function getExpenses(roomId) { return load('expenses').filter(e => e.roomId === roomId); }
-function getExpenseById(id) { return load('expenses').find(e => e.id === id) || null; }
-function addExpense(data) {
-  const list = load('expenses');
-  const id = generateId();
-  const record = { id, ...serialize(data) };
-  list.push(record);
-  save('expenses', list);
-  return { id, ...record };
-}
+// Invites
+async function getInvites() { return toList(await Invite.find()); }
+async function getInviteById(id) { try { return toPlain(await Invite.findById(id)); } catch { return null; } }
+async function getInviteByToken(token) { return toPlain(await Invite.findOne({ token })); }
+async function getRoomInvites(roomId) { return toList(await Invite.find({ roomId })); }
+async function addInvite(data) { return toPlain(await Invite.create(data)); }
+async function updateInvite(id, u) { try { return toPlain(await Invite.findByIdAndUpdate(id, u, { new: true })); } catch { return null; } }
+async function markInviteAccepted(id) { return updateInvite(id, { status: 'accepted', acceptedAt: new Date() }); }
 
-// --- ExpenseSplits ---
-function getExpenseSplits(expenseId) { return load('expenseSplits').filter(s => s.expenseId === expenseId); }
-function getExpenseSplitByUser(expenseId, userId) { return load('expenseSplits').find(s => s.expenseId === expenseId && s.userId === userId) || null; }
-function addExpenseSplit(data) {
-  const list = load('expenseSplits');
-  const id = generateId();
-  const record = { id, ...serialize(data) };
-  list.push(record);
-  save('expenseSplits', list);
-  return { id, ...record };
-}
-function updateExpenseSplit(id, updates) {
-  const list = load('expenseSplits');
-  const i = list.findIndex(s => s.id === id);
-  if (i === -1) return null;
-  list[i] = { ...list[i], ...serialize(updates) };
-  save('expenseSplits', list);
-  return list[i];
-}
+// Notifications
+async function getUserNotifications(userId) { return toList(await Notification.find({ userId }).sort({ createdAt: -1 })); }
+async function getNotificationById(id) { try { return toPlain(await Notification.findById(id)); } catch { return null; } }
+async function addNotification(data) { return toPlain(await Notification.create(data)); }
+async function updateNotification(id, u) { try { return toPlain(await Notification.findByIdAndUpdate(id, u, { new: true })); } catch { return null; } }
+async function deleteNotification(id) { try { await Notification.findByIdAndDelete(id); return true; } catch { return false; } }
+async function markAllNotificationsRead(userId) { await Notification.updateMany({ userId, is_read: false }, { is_read: true }); }
 
-// --- Chores ---
-function getChores(roomId) { return load('chores').filter(c => c.roomId === roomId); }
-function getChoreById(id) { return load('chores').find(c => c.id === id) || null; }
-function addChore(data) {
-  const list = load('chores');
-  const id = generateId();
-  const record = { id, ...serialize(data) };
-  list.push(record);
-  save('chores', list);
-  return { id, ...record };
-}
-
-// --- ChoreAssignments ---
-function getChoreAssignments(choreId) {
-  return load('choreAssignments')
-    .filter(a => a.choreId === choreId)
-    .sort((a, b) => (new Date(b.dueDate) || 0) - (new Date(a.dueDate) || 0));
-}
-function addChoreAssignment(data) {
-  const list = load('choreAssignments');
-  const id = generateId();
-  const record = { id, ...serialize(data) };
-  list.push(record);
-  save('choreAssignments', list);
-  return { id, ...record };
-}
-function updateChoreAssignment(id, updates) {
-  const list = load('choreAssignments');
-  const i = list.findIndex(a => a.id === id);
-  if (i === -1) return null;
-  list[i] = { ...list[i], ...serialize(updates) };
-  save('choreAssignments', list);
-  return list[i];
-}
-
-// --- Bills ---
-function getBills(roomId) { return load('bills').filter(b => b.roomId === roomId); }
-function getBillById(id) { return load('bills').find(b => b.id === id) || null; }
-function addBill(data) {
-  const list = load('bills');
-  const id = generateId();
-  const record = { id, ...serialize(data) };
-  list.push(record);
-  save('bills', list);
-  return { id, ...record };
-}
-function updateBill(id, updates) {
-  const list = load('bills');
-  const i = list.findIndex(b => b.id === id);
-  if (i === -1) return null;
-  list[i] = { ...list[i], ...serialize(updates) };
-  save('bills', list);
-  return list[i];
-}
-
-// --- Invites ---
-function getInvites() { return load('invites'); }
-function getInviteById(id) { return load('invites').find(i => i.id === id) || null; }
-function getInviteByToken(token) { return load('invites').find(i => i.token === token) || null; }
-function getRoomInvites(roomId) { return load('invites').filter(i => i.roomId === roomId); }
-function addInvite(data) {
-  const list = load('invites');
-  const id = generateId();
-  const record = { id, status: 'pending', ...serialize(data) };
-  list.push(record);
-  save('invites', list);
-  return { id, ...record };
-}
-function updateInvite(id, updates) {
-  const list = load('invites');
-  const i = list.findIndex(i => i.id === id);
-  if (i === -1) return null;
-  list[i] = { ...list[i], ...serialize(updates) };
-  save('invites', list);
-  return list[i];
-}
-function markInviteAccepted(id) {
-  return updateInvite(id, { status: 'accepted', acceptedAt: new Date() });
-}
-
-// --- Notifications ---
-function getUserNotifications(userId) {
-  return load('notifications')
-    .filter(n => n.userId === userId)
-    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-}
-
-function getNotificationById(id) {
-  return load('notifications').find(n => n.id === id) || null;
-}
-
-function addNotification(data) {
-  const list = load('notifications');
-  const id = generateId();
-  const record = {
-    id,
-    is_read: false,
-    createdAt: new Date(),
-    ...serialize(data),
+// Generic load (compat)
+async function load(collection) {
+  const map = {
+    users: User, rooms: Room, roomMembers: RoomMember,
+    expenses: Expense, expenseSplits: ExpenseSplit,
+    chores: Chore, choreAssignments: ChoreAssignment,
+    bills: Bill, payments: Payment, invites: Invite,
+    notifications: Notification,
   };
-  list.push(record);
-  save('notifications', list);
-  return { id, ...record };
-}
-
-function updateNotification(id, updates) {
-  const list = load('notifications');
-  const i = list.findIndex(n => n.id === id);
-  if (i === -1) return null;
-  list[i] = { ...list[i], ...serialize(updates) };
-  save('notifications', list);
-  return list[i];
-}
-
-function deleteNotification(id) {
-  const list = load('notifications');
-  const i = list.findIndex(n => n.id === id);
-  if (i === -1) return false;
-  list.splice(i, 1);
-  save('notifications', list);
-  return true;
+  const M = map[collection];
+  if (!M) return [];
+  return toList(await M.find());
 }
 
 module.exports = {
-  getUsers,
-  getUserById,
-  getUserByEmail,
-  addUser,
-  updateUser,
-  getRooms,
-  getRoomById,
-  getRoomByCode,
-  addRoom,
-  getRoomMembers,
-  getRoomMember,
-  addRoomMember,
-  updateRoomMember,
-  getExpenses,
-  getExpenseById,
-  addExpense,
-  getExpenseSplits,
-  getExpenseSplitByUser,
-  addExpenseSplit,
-  updateExpenseSplit,
-  getChores,
-  getChoreById,
-  addChore,
-  getChoreAssignments,
-  addChoreAssignment,
-  updateChoreAssignment,
-  getBills,
-  getBillById,
-  addBill,
-  updateBill,
-  getInvites,
-  getInviteById,
-  getInviteByToken,
-  getRoomInvites,
-  addInvite,
-  updateInvite,
-  markInviteAccepted,
-  getUserNotifications,
-  getNotificationById,
-  addNotification,
-  updateNotification,
-  deleteNotification,
+  getUsers, getUserById, getUserByEmail, addUser, updateUser,
+  getRooms, getRoomById, getRoomByCode, addRoom, updateRoom, deleteRoom,
+  getRoomMembers, getRoomMember, addRoomMember, updateRoomMember, deleteRoomMember, deleteRoomMemberByUserAndRoom,
+  getExpenses, getExpenseById, addExpense, updateExpense, deleteExpense,
+  getExpenseSplits, getExpenseSplitByUser, addExpenseSplit, updateExpenseSplit, deleteExpenseSplitsByExpense,
+  getChores, getChoreById, addChore, updateChore, deleteChore,
+  getChoreAssignments, addChoreAssignment, updateChoreAssignment, deleteChoreAssignmentsByChore,
+  getBills, getBillById, addBill, updateBill, deleteBill,
+  getPayments, getPaymentById, addPayment, deletePayment,
+  getInvites, getInviteById, getInviteByToken, getRoomInvites, addInvite, updateInvite, markInviteAccepted,
+  getUserNotifications, getNotificationById, addNotification, updateNotification, deleteNotification, markAllNotificationsRead,
   load,
-  save,
-  generateId,
 };

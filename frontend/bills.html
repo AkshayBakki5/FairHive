@@ -22,6 +22,8 @@
         <div id="loading" class="loading-wrap"><div class="spinner"></div></div>
         <div id="billList" style="display: none;"></div>
         <div id="emptyBills" class="empty-state" style="display: none;">No bills yet. Add one above.</div>
+
+        <!-- Add bill modal -->
         <div id="addBillModal" class="modal-backdrop" style="display: none;">
           <div class="modal">
             <div class="modal-header">Add bill <button type="button" class="modal-close" id="addBillClose">&times;</button></div>
@@ -33,7 +35,7 @@
               </div>
               <div class="form-group">
                 <input type="number" id="billAmount" placeholder=" " step="0.01" min="0" required>
-                <label for="billAmount">Amount ($)</label>
+                <label for="billAmount">Amount (₹)</label>
               </div>
               <div class="form-group">
                 <input type="date" id="billDueDate" placeholder=" ">
@@ -42,12 +44,39 @@
               <div class="form-group">
                 <label>Bill image (optional)</label>
                 <input type="file" id="billImageFile" accept="image/*,.pdf" style="margin-bottom: 0.5rem;">
-                <input type="url" id="billImageUrl" placeholder="Or paste URL">
+                <input type="url" id="billImageUrl" placeholder="Or paste image URL">
               </div>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-ghost" id="addBillCancel">Cancel</button>
               <button type="button" class="btn btn-primary" id="addBillSubmit">Add</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Edit bill modal -->
+        <div id="editBillModal" class="modal-backdrop" style="display: none;">
+          <div class="modal">
+            <div class="modal-header">Edit bill <button type="button" class="modal-close" id="editBillClose">&times;</button></div>
+            <div class="modal-body">
+              <input type="hidden" id="editBillId">
+              <div id="editBillError" class="alert alert-error" style="display: none;"></div>
+              <div class="form-group">
+                <input type="text" id="editBillName" placeholder=" " required>
+                <label for="editBillName">Bill name</label>
+              </div>
+              <div class="form-group">
+                <input type="number" id="editBillAmount" placeholder=" " step="0.01" min="0" required>
+                <label for="editBillAmount">Amount (₹)</label>
+              </div>
+              <div class="form-group">
+                <input type="date" id="editBillDueDate" placeholder=" ">
+                <label for="editBillDueDate">Due date</label>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-ghost" id="editBillCancel">Cancel</button>
+              <button type="button" class="btn btn-primary" id="editBillSubmit">Save</button>
             </div>
           </div>
         </div>
@@ -57,118 +86,6 @@
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/layout.js"></script>
-  <script>
-    (function () {
-      if (!FairHiveAuth.guard()) return;
-      FairHiveLayout.initLayout();
-
-      var room = FairHiveAuth.getCurrentRoom();
-      var noRoom = document.getElementById('no-room');
-      var loading = document.getElementById('loading');
-      var billList = document.getElementById('billList');
-      var emptyBills = document.getElementById('emptyBills');
-
-      if (!room) {
-        noRoom.style.display = 'block';
-        loading.style.display = 'none';
-        return;
-      }
-
-      function loadBills() {
-        loading.style.display = 'block';
-        billList.style.display = 'none';
-        emptyBills.style.display = 'none';
-        FairHiveAPI.get('/rooms/' + room.id + '/bills').then(function (list) {
-          loading.style.display = 'none';
-          if (list.length === 0) {
-            emptyBills.style.display = 'block';
-            return;
-          }
-          var html = '<div class="table-wrap"><table class="data-table"><thead><tr><th>Name</th><th>Amount</th><th>Due date</th><th>Proof</th><th>Status</th><th>Action</th></tr></thead><tbody>';
-          list.forEach(function (b) {
-            var due = b.dueDate ? (typeof b.dueDate === 'string' ? new Date(b.dueDate).toLocaleDateString() : (b.dueDate._seconds ? new Date(b.dueDate._seconds * 1000).toLocaleDateString() : (b.dueDate.toDate ? b.dueDate.toDate().toLocaleDateString() : '-'))) : '-';
-            var proof = b.billImageUrl ? '<a href="' + b.billImageUrl + '" target="_blank" rel="noopener">View</a>' : '-';
-            var status = b.paid ? '<span class="badge badge-success">Paid</span>' : '<span class="badge badge-warning">Unpaid</span>';
-            var action = b.paid ? '' : '<button type="button" class="btn btn-success btn-sm" data-bill-id="' + b.id + '">Mark paid</button>';
-            html += '<tr><td>' + (b.name || '-') + '</td><td>$' + (b.amount || 0).toFixed(2) + '</td><td>' + due + '</td><td>' + proof + '</td><td>' + status + '</td><td>' + action + '</td></tr>';
-          });
-          html += '</tbody></table></div>';
-          billList.innerHTML = html;
-          billList.style.display = 'block';
-          billList.querySelectorAll('[data-bill-id]').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-              var billId = btn.getAttribute('data-bill-id');
-              FairHiveAPI.patch('/bills/' + billId, { paid: true }).then(function () { loadBills(); }).catch(function () {});
-            });
-          });
-        }).catch(function () {
-          loading.style.display = 'none';
-          billList.innerHTML = '<p class="alert alert-error">Failed to load bills.</p>';
-          billList.style.display = 'block';
-        });
-      }
-
-      document.getElementById('btnAddBill').addEventListener('click', function () {
-        document.getElementById('addBillModal').style.display = 'flex';
-        document.getElementById('addBillError').style.display = 'none';
-        document.getElementById('billName').value = '';
-        document.getElementById('billAmount').value = '';
-        document.getElementById('billDueDate').value = new Date().toISOString().slice(0, 10);
-        document.getElementById('billImageUrl').value = '';
-      });
-      document.getElementById('addBillClose').addEventListener('click', function () {
-        document.getElementById('addBillModal').style.display = 'none';
-      });
-      document.getElementById('addBillCancel').addEventListener('click', function () {
-        document.getElementById('addBillModal').style.display = 'none';
-      });
-      function uploadFile(file, done) {
-        var form = new FormData();
-        form.append('file', file);
-        var token = FairHiveAuth.getToken();
-        fetch(FairHiveAPI.baseURL + '/upload', {
-          method: 'POST',
-          headers: token ? { 'Authorization': 'Bearer ' + token } : {},
-          body: form
-        }).then(function (r) { return r.json(); }).then(function (data) { done(null, data.url); }).catch(function (e) { done(e); });
-      }
-      document.getElementById('addBillSubmit').addEventListener('click', function () {
-        var name = document.getElementById('billName').value.trim() || 'Bill';
-        var amount = parseFloat(document.getElementById('billAmount').value);
-        var dueDate = document.getElementById('billDueDate').value || new Date().toISOString().slice(0, 10);
-        var billImageUrl = document.getElementById('billImageUrl').value.trim() || null;
-        var fileInput = document.getElementById('billImageFile');
-        var errEl = document.getElementById('addBillError');
-        errEl.style.display = 'none';
-        if (isNaN(amount) || amount < 0) {
-          errEl.textContent = 'Enter a valid amount.';
-          errEl.style.display = 'block';
-          return;
-        }
-        function submit(body) {
-          FairHiveAPI.post('/rooms/' + room.id + '/bills', body).then(function () {
-            document.getElementById('addBillModal').style.display = 'none';
-            loadBills();
-          }).catch(function (err) {
-            errEl.textContent = (err.body && err.body.error) || 'Failed to add bill';
-            errEl.style.display = 'block';
-          });
-        }
-        var body = { name: name, amount: amount, dueDate: dueDate };
-        if (billImageUrl) body.billImageUrl = billImageUrl;
-        if (fileInput.files && fileInput.files[0]) {
-          uploadFile(fileInput.files[0], function (err, url) {
-            if (err) { errEl.textContent = 'Upload failed'; errEl.style.display = 'block'; return; }
-            body.billImageUrl = url;
-            submit(body);
-          });
-        } else {
-          submit(body);
-        }
-      });
-
-      loadBills();
-    })();
-  </script>
+  <script src="js/bills.js"></script>
 </body>
 </html>

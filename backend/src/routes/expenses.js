@@ -1,10 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const expensesController = require('../controllers/expensesController');
+const c = require('../controllers/expensesController');
 const { auth } = require('../middleware/auth');
 
 router.use(auth);
 
-router.patch('/:id/splits/:userId/paid', expensesController.markSplitPaid);
+router.patch('/:id', c.update);
+router.delete('/:id', c.remove);
+router.patch('/:id/splits/:userId/paid', c.markSplitPaid);
 
 module.exports = router;
