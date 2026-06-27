@@ -1,7 +1,10 @@
 const { validationResult } = require('express-validator');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 const store = require('../store/jsonStore');
 const { hashPassword, comparePassword } = require('../utils/hash');
 const { sign } = require('../utils/jwt');
+const User = require('../models/User');
 
 /**
  * POST /api/auth/register
@@ -91,4 +94,73 @@ async function changePassword(req, res, next) {
   } catch (e) { next(e); }
 }
 
-module.exports = { register, login, me, updateProfile, changePassword };
+/**
+ * POST /api/auth/forgot-password
+ */
+async function forgotPassword(req, res, next) {
+  try {
+    const email = (req.body.email || '').trim().toLowerCase();
+    if (!email) return res.status(400).json({ error: 'Email required' });
+
+    // Always return success to avoid user enumeration
+    const user = await store.getUserByEmail(email);
+    if (!user) return res.json({ ok: true });
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    await User.findByIdAndUpdate(user.id, { resetToken: token, resetTokenExpiry: expiry });
+
+    const resetUrl = `${process.env.FRONTEND_URL || process.env.BASE_URL || 'http://localhost:3000'}/reset-password.html?token=${token}`;
+
+    // Send email if SMTP configured
+    if (process.env.SMTP_HOST) {
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: Number(process.env.SMTP_PORT) || 587,
+        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+      });
+      await transporter.sendMail({
+        from: process.env.SMTP_USER,
+        to: email,
+        subject: 'FairHive — Reset your password',
+        html: `<p>Click the link below to reset your password. It expires in 1 hour.</p>
+               <p><a href="${resetUrl}">${resetUrl}</a></p>
+               <p>If you did not request this, ignore this email.</p>`,
+      });
+    } else {
+      // No SMTP — log the link so admins can share it manually
+      console.log(`[FairHive] Password reset link for ${email}: ${resetUrl}`);
+    }
+
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+}
+
+/**
+ * POST /api/auth/reset-password
+ */
+async function resetPassword(req, res, next) {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) return res.status(400).json({ error: 'Token and password required' });
+    if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
+
+    const user = await User.findOne({
+      resetToken: token,
+      resetTokenExpiry: { $gt: new Date() },
+    });
+    if (!user) return res.status(400).json({ error: 'Reset link is invalid or has expired' });
+
+    const passwordHash = await hashPassword(password);
+    await User.findByIdAndUpdate(user._id, {
+      passwordHash,
+      resetToken: null,
+      resetTokenExpiry: null,
+    });
+
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+}
+
+module.exports = { register, login, me, updateProfile, changePassword, forgotPassword, resetPassword };
